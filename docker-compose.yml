@@ -1,0 +1,23 @@
+# Local services for the WANDS search rebuild.
+# Day 1: one Elasticsearch node. Redis is added on Day 5.
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    container_name: es
+    environment:
+      # One node, no cluster discovery. Fine for a laptop, never for production.
+      - discovery.type=single-node
+      # No passwords or HTTPS. Local use only.
+      - xpack.security.enabled=false
+      # Java heap: half of the container's memory. The other half is for the OS file cache,
+      # which Elasticsearch relies on to read index files fast.
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    mem_limit: 2g
+    ports:
+      - "9200:9200"
+    volumes:
+      # Named volume so the index survives `docker compose down` and restarts.
+      - esdata:/usr/share/elasticsearch/data
+
+volumes:
+  esdata:
