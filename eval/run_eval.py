@@ -106,8 +106,12 @@ def method_vector(model_key, exact=False):
 
     from search import ES_URL, vector_exact, vector_knn
 
+    # pooled indexes hold pooled MiniLM vectors, so the query is encoded with MiniLM
     names = {"mpnet": "sentence-transformers/all-mpnet-base-v2",
-             "minilm": "sentence-transformers/all-MiniLM-L6-v2"}
+             "minilm": "sentence-transformers/all-MiniLM-L6-v2",
+             "pool_mean": "sentence-transformers/all-MiniLM-L6-v2",
+             "pool_max": "sentence-transformers/all-MiniLM-L6-v2",
+             "pool_top3": "sentence-transformers/all-MiniLM-L6-v2"}
     es = Elasticsearch(ES_URL, request_timeout=60)
     model = SentenceTransformer(names[model_key], device="cpu")
     index = f"products_{model_key}_{_dt.date.today():%Y%m%d}"
@@ -142,6 +146,8 @@ def get_method(name, labels):
         return method_vector("mpnet", exact=True)
     if name == "minilm_hnsw":
         return method_vector("minilm")
+    if name in ("pool_mean", "pool_max", "pool_top3"):
+        return method_vector(name)
     raise SystemExit(f"Unknown method {name!r}")
 
 
