@@ -34,6 +34,10 @@ VECTORS_DIR = ROOT / "data/vectors"
 MODELS = {
     "mpnet": "sentence-transformers/all-mpnet-base-v2",
     "minilm": "sentence-transformers/all-MiniLM-L6-v2",
+    # fine-tuned MiniLM variants saved by src/train_lora.py
+    "lora_r4": str(ROOT / "data/models/lora_r4_merged"),
+    "lora_r16": str(ROOT / "data/models/lora_r16_merged"),
+    "full_ft": str(ROOT / "data/models/full_ft_merged"),
 }
 
 

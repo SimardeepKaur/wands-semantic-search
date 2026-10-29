@@ -65,6 +65,18 @@ def ceilings(labels, query_ids):
     return sum(strict) / len(strict), sum(lenient) / len(lenient)
 
 
+# Which encoder embeds the query for each vector index. Pooled indexes hold pooled
+# MiniLM vectors, so plain MiniLM encodes the query; fine-tuned indexes (item 8)
+# use their own tuned model, saved by src/train_lora.py.
+_MINILM = "sentence-transformers/all-MiniLM-L6-v2"
+QUERY_MODELS = {"mpnet": "sentence-transformers/all-mpnet-base-v2",
+                "minilm": _MINILM,
+                "pool_mean": _MINILM, "pool_max": _MINILM, "pool_top3": _MINILM,
+                "lora_r4": str(ROOT / "data/models/lora_r4_merged"),
+                "lora_r16": str(ROOT / "data/models/lora_r16_merged"),
+                "full_ft": str(ROOT / "data/models/full_ft_merged")}
+
+
 # ---- methods: each returns a function (query_id, query_text) -> list of product ids ----
 
 def method_oracle(labels):
@@ -106,14 +118,8 @@ def method_vector(model_key, exact=False):
 
     from search import ES_URL, vector_exact, vector_knn
 
-    # pooled indexes hold pooled MiniLM vectors, so the query is encoded with MiniLM
-    names = {"mpnet": "sentence-transformers/all-mpnet-base-v2",
-             "minilm": "sentence-transformers/all-MiniLM-L6-v2",
-             "pool_mean": "sentence-transformers/all-MiniLM-L6-v2",
-             "pool_max": "sentence-transformers/all-MiniLM-L6-v2",
-             "pool_top3": "sentence-transformers/all-MiniLM-L6-v2"}
     es = Elasticsearch(ES_URL, request_timeout=60)
-    model = SentenceTransformer(names[model_key], device="cpu")
+    model = SentenceTransformer(QUERY_MODELS[model_key], device="cpu")
     index = f"products_{model_key}_{_dt.date.today():%Y%m%d}"
     if not es.indices.exists(index=index):
         raise SystemExit(f"Index {index} does not exist. Run src/index_vectors.py first.")
@@ -125,9 +131,9 @@ def method_vector(model_key, exact=False):
     return run
 
 
-def method_hybrid(kind, w=None):
+def method_hybrid(kind, w=None, model_key="minilm"):
     """RRF (k=60) or weighted blend over the top 100 from the patched BM25
-    (class-boost rewrite, the item 4 winner) and the top 100 from the MiniLM index."""
+    (class-boost rewrite, the item 4 winner) and the top 100 from a vector index."""
     import datetime as _dt
 
     from elasticsearch import Elasticsearch
@@ -138,9 +144,9 @@ def method_hybrid(kind, w=None):
     from search import ES_URL, vector_knn
 
     es = Elasticsearch(ES_URL, request_timeout=60)
-    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", device="cpu")
+    model = SentenceTransformer(QUERY_MODELS[model_key], device="cpu")
     resources = build_resources()
-    index = f"products_minilm_{_dt.date.today():%Y%m%d}"
+    index = f"products_{model_key}_{_dt.date.today():%Y%m%d}"
     if not es.indices.exists(index=index):
         raise SystemExit(f"Index {index} does not exist. Run src/index_vectors.py first.")
     top = 100
@@ -185,6 +191,10 @@ def get_method(name, labels):
         return method_hybrid("rrf")
     if name.startswith("blend_w"):
         return method_hybrid("blend", w=float(name.removeprefix("blend_w")))
+    if name in ("lora_r4", "lora_r16", "full_ft"):
+        return method_vector(name)
+    if name.endswith("_hybrid") and name.removesuffix("_hybrid") in ("lora_r4", "lora_r16", "full_ft"):
+        return method_hybrid("rrf", model_key=name.removesuffix("_hybrid"))
     raise SystemExit(f"Unknown method {name!r}")
 
 
