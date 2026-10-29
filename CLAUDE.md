@@ -54,7 +54,7 @@ Never say "as you know", "obviously" or "simply".
 | Containers | Docker, Docker Compose | Installing everything directly on the laptop |
 | Search engine | Elasticsearch 8.15 (free tier), BM25 plus `dense_vector` with HNSW | OpenSearch, pgvector, Chroma, Pinecone, FAISS alone |
 | Hybrid ranking | Reciprocal Rank Fusion, written by hand in Python | Elasticsearch's paid RRF, weighted score blending |
-| Encoder | `all-mpnet-base-v2` via sentence-transformers | `all-MiniLM-L6-v2`, calling an LLM |
+| Encoder | `all-MiniLM-L6-v2` via sentence-transformers (user decision 2026-10-29: MiniLM measured better than MPNet, see DECISIONS.md "Encoder") | `all-mpnet-base-v2` (the original choice, measured and beaten), calling an LLM |
 | Fine-tuning | LoRA via `peft` | Full fine-tuning, frozen encoder plus layers |
 | Experiment tracking | MLflow (local `mlruns/`) | Notebook names and spreadsheets |
 | Embedding job | One Python script | Spark, Ray |
