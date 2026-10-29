@@ -17,7 +17,7 @@ The plan fixes **what each item must produce and how it is checked**. It does no
 5. Work on a branch `item-NN-<short-name>`.
 6. Run the item's **Done when** checks. Every check must pass.
 7. Record: eval rows through `eval/run_eval.py`, other numbers in `results/perf.csv`, a `DECISIONS.md` entry if the item makes a choice, one line in `PROGRESS.md`.
-8. Tick the item `[x]` in this file on the same branch. Commit, push, open a PR, wait for CI, merge.
+8. Tick the item `[x]` in this file on the same branch. Commit, push, open a PR, wait for CI, merge with a merge commit (not squash), so the `git_commit` of every logged run stays on `main`.
 9. End the iteration. A long job (encoding, training, load test) runs in the background and the next iteration starts when it finishes.
 
 One iteration does one item, or one clear part of a large item (item 8 has five runs).

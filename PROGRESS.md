@@ -29,3 +29,4 @@ Built: item 1 (gh 2.103.3 and kind 0.33.0 in ~/.local/bin, checksums checked; .v
 Things that broke, and why: the container name `es` was taken by a stopped container from the teaching copy. Renamed this project's container to `wands-es` and left the other one alone.
 - Things that broke: the documented strict ceiling 0.599 was slightly high. It counted the 1,467 repeated label rows as separate products. With one label per query-product pair the ceilings are strict 0.5975, lenient 0.9858. Fixed in CLAUDE.md, PROBLEM.md, DECISIONS.md and PLAN.md.
 - Item 3 done: eval/run_eval.py (refuses to log on a dirty tree, above a ceiling or on fewer than 480 queries), eval/compare.py (paired bootstrap). Runs: oracle, bm25_plain, bm25_fuzzy.
+- Things that broke: PRs 1 and 2 were squash-merged, so commit 210bbd3 (logged for oracle, bm25_plain, bm25_fuzzy) is only in PR 2's history, not on main. From item 4 on, PRs use merge commits.
