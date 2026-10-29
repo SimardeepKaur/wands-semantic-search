@@ -44,9 +44,11 @@ MODELS_DIR = ROOT / "data/models"
 BASE_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 SEED = 0
 
-N_SAME_PATH = 15000
-N_SAME_ROOT = 15000
-N_CROSS = 15000
+# 30k pairs total: the smoke test measured ~5 pairs/s on this CPU, so 30k keeps
+# each run under ~2 hours while all three runs see the same pairs (seed 0).
+N_SAME_PATH = 10000
+N_SAME_ROOT = 10000
+N_CROSS = 10000
 N_EVAL = 3000
 
 
@@ -124,6 +126,10 @@ def main():
 
     import mlflow
     import torch
+    # Train on CPU only. use_cpu=True alone still let the trainer put batches on
+    # MPS (device mix crash), and MPS thrashes this 8 GB machine anyway
+    # (PROGRESS.md 2026-10-29), so hide MPS from torch/accelerate entirely.
+    torch.backends.mps.is_available = lambda: False
     from datasets import Dataset
     from sentence_transformers import (SentenceTransformer, SentenceTransformerTrainer,
                                        SentenceTransformerTrainingArguments)

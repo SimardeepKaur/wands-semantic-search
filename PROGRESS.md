@@ -37,3 +37,4 @@ Things that broke, and why: the container name `es` was taken by a stopped conta
 - Item 5 done. Vectors beat BM25 (minilm_hnsw strict 0.3475 vs 0.3229). HNSW = exact quality. MiniLM beats MPNet reliably (+0.0160 strict), which contradicts the stack's encoder choice: build paused for the user, per the plan's stop rule. Items 6-8 depend on the answer.
 - 2026-10-29: User decided the encoder: switch the stack to all-MiniLM-L6-v2 (it measured better than MPNet, strict P@10 0.3475 vs 0.3315). Recorded in DECISIONS.md and CLAUDE.md. Loop restarted at item 6.
 - 2026-10-29: Indexing script failed on first try: I ran index_vectors.py from inside src/, but it opens data/vectors/ relative to the repo root. Reran from the root.
+- 2026-10-29: LoRA smoke test crashed: the trainer moved batches to MPS despite use_cpu=True, so model and data sat on different devices. Fixed by hiding MPS from torch inside train_lora.py.
