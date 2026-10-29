@@ -38,3 +38,4 @@ Things that broke, and why: the container name `es` was taken by a stopped conta
 - 2026-10-29: User decided the encoder: switch the stack to all-MiniLM-L6-v2 (it measured better than MPNet, strict P@10 0.3475 vs 0.3315). Recorded in DECISIONS.md and CLAUDE.md. Loop restarted at item 6.
 - 2026-10-29: Indexing script failed on first try: I ran index_vectors.py from inside src/, but it opens data/vectors/ relative to the repo root. Reran from the root.
 - 2026-10-29: LoRA smoke test crashed: the trainer moved batches to MPS despite use_cpu=True, so model and data sat on different devices. Fixed by hiding MPS from torch inside train_lora.py.
+- 2026-10-29: The local training job was killed by the OS at 96% of the first LoRA run (memory pressure: Chrome with Colab open plus training exceeded 8 GB, no checkpoint saved). Moved all three training runs to one Colab GPU notebook; that also puts all three training times on the same hardware.
