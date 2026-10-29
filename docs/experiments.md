@@ -10,7 +10,7 @@ Two WANDS queries, plain BM25 (`multi_match` over name, description, features) v
 - Typo query "ligth bulb": fuzzy helps. Without it only "bulb" matches, and the list fills with holiday string lights. With it, "ligth" matches "light" and products from the Light Bulbs class come in.
 - Synonym query "toddler couch fold out": fuzzy hurts. It cannot turn "couch" into "sofa". Instead it loosens every word and brings in unrelated products (a slow cooker, a bulletin board, a pillow insert).
 - So fuzzy fixes typos, not synonyms. Synonyms need a dictionary (item 4) or vectors (item 5).
-- The full-set effect is logged as run `bm25_fuzzy` in item 3.
+- The full-set effect is below, under "Full set (item 3)".
 
 
 ## Query 305: "ligth bulb"
@@ -76,3 +76,18 @@ Two WANDS queries, plain BM25 (`multi_match` over name, description, features) v
 | 8 | Partial | czech toddler flip zebra kids sleeper | Kids Chairs |
 | 9 | - | photo calendar bulletin board cut out | Classroom Decorations |
 | 10 | Irrelevant | bauder twin or smaller 41.7 '' convertible sofa | Futons|Sofas |
+
+### Full set (item 3)
+
+Output of `python eval/compare.py bm25_plain bm25_fuzzy`:
+
+```
+bm25_fuzzy minus bm25_plain, 480 queries, paired bootstrap 10,000 resamples
+
+          metric  bm25_plain  bm25_fuzzy    diff  ci_low  ci_high  excludes_0  better  worse  same
+      p10_strict      0.3229      0.2977 -0.0252 -0.0365  -0.0140        True      48     95   337
+     p10_lenient      0.6892      0.6381 -0.0510 -0.0675  -0.0354        True      84    169   227
+unlabelled_share      0.2554      0.3090  0.0535  0.0379   0.0698        True     172     81   227
+```
+
+Fuzzy is reliably worse on the full set: it helps a few typo queries and loosens every other query.

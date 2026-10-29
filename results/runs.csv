@@ -1,0 +1,4 @@
+run_name,date,git_commit,method,p10_strict,p10_lenient,unlabelled_share,notes
+oracle,2026-10-28,210bbd3,oracle,0.5975,0.9858,0.0,scorer check: Exact first then Partial
+bm25_plain,2026-10-28,210bbd3,bm25_plain,0.3229,0.6892,0.2554,"multi_match over name, description, features"
+bm25_fuzzy,2026-10-28,210bbd3,bm25_fuzzy,0.2977,0.6381,0.309,"multi_match over name, description, features"

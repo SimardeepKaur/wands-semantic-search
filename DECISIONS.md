@@ -16,8 +16,8 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 
 ### Headline metric
 - **Chosen:** Strict precision@10 (only Exact counts). Lenient P@10 and unlabelled share reported next to it.
-- **Rejected:** Lenient P@10 as headline (near its 0.986 ceiling, blind to brand and colour). nDCG@10 with graded credit (credit weights are a guess).
-- **Evidence:** Ceilings from the labels: strict 0.599, lenient 0.986. No eval run yet.
+- **Rejected:** Lenient P@10 as headline (near its 0.9858 ceiling, blind to brand and colour). nDCG@10 with graded credit (credit weights are a guess).
+- **Evidence:** Ceilings from run `oracle`: strict 0.5975, lenient 0.9858.
 - **Why (in my words):**
 
 ### Text analyzer
@@ -35,5 +35,5 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 ### Fuzzy matching
 - **Chosen:** No fuzzy matching by default. Spelling is handled by spell correction in the patched baseline (item 4).
 - **Rejected:** `fuzziness: AUTO` on every query.
-- **Evidence:** `docs/experiments.md`, item 2. On "ligth bulb" fuzzy brings in the Light Bulbs class. On "toddler couch fold out" it brings in unrelated products and cannot map "couch" to "sofa". Full-set run: `bm25_fuzzy` (pending, item 3).
+- **Evidence:** `docs/experiments.md`, item 2. On "ligth bulb" fuzzy brings in the Light Bulbs class. On "toddler couch fold out" it brings in unrelated products and cannot map "couch" to "sofa". Full set (runs `bm25_plain`, `bm25_fuzzy`): strict P@10 0.3229 -> 0.2977, difference -0.0252, 95% interval -0.0365 to -0.0140. Fuzzy is better on 48 queries and worse on 95. Lenient also drops (0.6892 -> 0.6381) and unlabelled share rises (0.2554 -> 0.3090). Median time per query 13.0 ms -> 29.7 ms.
 - **Why (in my words):**

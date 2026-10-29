@@ -41,8 +41,10 @@ If a system put every Exact product first, then every Partial, it would score:
 
 | Metric | Ceiling |
 |---|---|
-| Strict P@10 | 0.599 |
-| Lenient P@10 | 0.986 |
+| Strict P@10 | 0.5975 |
+| Lenient P@10 | 0.9858 |
+
+These come from run `oracle` in `results/runs.csv`. An earlier version of this file said 0.599 for strict: that figure counted repeated label rows as separate products.
 
 Strict is capped because 101 queries have 0 Exact labels and 136 have between 1 and 9. Only 243 queries have 10 or more.
 
@@ -72,6 +74,7 @@ Rule for building it: synonyms, spelling vocabulary and rewrite rules come from 
 ## 5. Known limits
 
 - **Labels are incomplete.** A median of 216 labelled products per query, out of 42,994. A good product with no label counts as a miss. For query 49, 15 of the 120 towel and robe hooks in the catalogue have no label.
+- **Some labels are repeated.** 1,467 query-product pairs appear more than once in `label.csv`, and 14 of them disagree (for example Exact and Partial). The eval keeps one label per pair: majority vote, a tie goes to the better label.
 - **This biases against new methods.** The labelled products were the ones some earlier search systems returned. A new method (for example vector search) may find good products nobody labelled, and its score will be too low. Check unlabelled share on every run before trusting a drop.
 - **Some labels look wrong.** Product 26575 "align wall mounted robe hook" may be a Moen product (Align is a Moen line in this catalogue) but is labelled Partial. We do not fix labels; we note them.
 
