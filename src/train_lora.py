@@ -31,9 +31,13 @@ Usage:
 """
 import argparse
 import hashlib
+import os
 import random
 import time
 from pathlib import Path
+
+# MLflow 3.x needs this flag to write to the stack's local mlruns/ file store.
+os.environ.setdefault("MLFLOW_ALLOW_FILE_STORE", "true")
 
 import numpy as np
 import pandas as pd
