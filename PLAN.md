@@ -71,20 +71,20 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
 
 ### Phase A: setup
 
-- [ ] **1. Repo and tools**
+- [x] **1. Repo and tools**
   - Do: create `.venv` with Python 3.11, pin all dependencies. Install `gh` and `kind` into `~/.local/bin` from official releases, checking the published checksums. `git init`, first commit to `main`, create the public repo `wands-semantic-search`, push.
   - Needs: user steps 1 and 2 (Docker running, `gh auth login`). Everything except creating the repo and pushing can be done before.
   - Done when: `gh repo view` shows a public repo. `git ls-files` lists no data, vectors, models or `.env`. `gh --version` and `kind version` run. A fresh venv installs `requirements.txt` without errors.
 
 ### Phase B: text search (Elasticsearch on)
 
-- [ ] **2. Fuzzy experiment**
+- [x] **2. Fuzzy experiment**
   - Do: run one typo query and one synonym query with and without `fuzziness: AUTO`. Show the top 10 with labels.
   - Done when: `docs/experiments.md` says which of the two fuzzy fixes, with the result lists. `DECISIONS.md` has a "Fuzzy matching" entry.
 
 - [ ] **3. Eval**
   - Do: `eval/run_eval.py` (all 480 queries, strict and lenient P@10, unlabelled share, per-query file, appends to `runs.csv` with the commit). `eval/compare.py <run_a> <run_b>` for the paired bootstrap.
-  - Done when: an "oracle" run (labelled Exact products ranked first, then Partial) gives exactly the known ceilings, strict 0.599 and lenient 0.986. This proves the scorer. The oracle row is logged with method `oracle`. `bm25_plain` is logged.
+  - Done when: an "oracle" run (labelled Exact products ranked first, then Partial) gives exactly the known ceilings, strict 0.599 and lenient 0.986. This proves the scorer. The oracle row is logged with method `oracle`. `bm25_plain` and `bm25_fuzzy` are logged, and `bm25_fuzzy` is added to the "Fuzzy matching" entry in `DECISIONS.md`.
 
 - [ ] **4. Baselines**
   - Do: BM25 plus linguistic patching. Built from `product.csv` only:

@@ -1,9 +1,9 @@
 # Local services for the WANDS search rebuild.
-# Day 1: one Elasticsearch node. Redis is added on Day 5.
+# One Elasticsearch node. Redis is added in item 11.
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
-    container_name: es
+    container_name: wands-es
     environment:
       # One node, no cluster discovery. Fine for a laptop, never for production.
       - discovery.type=single-node
