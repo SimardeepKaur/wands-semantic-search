@@ -6,8 +6,9 @@ default for an indexed dense_vector) with cosine similarity; exact search over t
 same field works through script_score, so one index serves both.
 
 Usage:
-    python src/index_vectors.py --model mpnet    # -> products_mpnet_<date>
-    python src/index_vectors.py --model minilm   # -> products_minilm_<date>
+    python src/index_vectors.py --model mpnet      # -> products_mpnet_<date>
+    python src/index_vectors.py --model minilm     # -> products_minilm_<date>
+    python src/index_vectors.py --model pool_mean  # -> products_pool_mean_<date> (src/pool.py)
 """
 import argparse
 import datetime as dt
@@ -20,7 +21,8 @@ from index_products import MAPPING, SETTINGS, clean
 from search import ES_URL
 
 PRODUCTS_CSV = "data/WANDS/dataset/product.csv"
-DIMS = {"mpnet": 768, "minilm": 384}
+DIMS = {"mpnet": 768, "minilm": 384,
+        "pool_mean": 384, "pool_max": 384, "pool_top3": 384}
 
 
 def main():

@@ -102,7 +102,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
   - Also measured, in `results/perf.csv`: time per query for HNSW vs exact search (p50, p99 over 480 queries), and query encoding time on CPU for MPNet vs MiniLM.
   - Done when: the vector file has 42,994 rows, no NaN values and unit norms. Three runs logged. Timings logged. `DECISIONS.md` has "Encoder" and "Exact vs HNSW" entries.
 
-- [ ] **6. Pooling**
+- [x] **6. Pooling** (done; all three pooled variants reliably worse than the whole-text vector, rejected)
   - Do: encode each of the 128,919 unique feature strings once with MiniLM (the chosen encoder), then build per-product vectors by lookup:
     - Mean: average of the product's feature vectors.
     - Max: element-wise max, then normalised.
