@@ -125,6 +125,39 @@ def method_vector(model_key, exact=False):
     return run
 
 
+def method_hybrid(kind, w=None):
+    """RRF (k=60) or weighted blend over the top 100 from the patched BM25
+    (class-boost rewrite, the item 4 winner) and the top 100 from the MiniLM index."""
+    import datetime as _dt
+
+    from elasticsearch import Elasticsearch
+    from sentence_transformers import SentenceTransformer
+
+    from patch import bm25_patched, build_resources
+    from rrf import blend, rrf
+    from search import ES_URL, vector_knn
+
+    es = Elasticsearch(ES_URL, request_timeout=60)
+    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", device="cpu")
+    resources = build_resources()
+    index = f"products_minilm_{_dt.date.today():%Y%m%d}"
+    if not es.indices.exists(index=index):
+        raise SystemExit(f"Index {index} does not exist. Run src/index_vectors.py first.")
+    top = 100
+
+    def run(_qid, text):
+        bm = bm25_patched(es, text, top, synonyms=False, spell=False, rewrite=True,
+                          resources=resources)
+        vec = model.encode(text, normalize_embeddings=True).tolist()
+        vc = vector_knn(es, index, vec, k=top, num_candidates=200)
+        if kind == "rrf":
+            fused = rrf([[h["product_id"] for h in bm], [h["product_id"] for h in vc]])
+        else:
+            fused = blend(bm, vc, w)
+        return fused[:K]
+    return run
+
+
 def get_method(name, labels):
     if name == "oracle":
         return method_oracle(labels)
@@ -148,6 +181,10 @@ def get_method(name, labels):
         return method_vector("minilm")
     if name in ("pool_mean", "pool_max", "pool_top3"):
         return method_vector(name)
+    if name == "hybrid_rrf60":
+        return method_hybrid("rrf")
+    if name.startswith("blend_w"):
+        return method_hybrid("blend", w=float(name.removeprefix("blend_w")))
     raise SystemExit(f"Unknown method {name!r}")
 
 

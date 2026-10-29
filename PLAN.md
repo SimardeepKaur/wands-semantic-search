@@ -113,7 +113,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
 
 ### Phase D: hybrid
 
-- [ ] **7. Hybrid**
+- [x] **7. Hybrid** (done; RRF k=60 is the new best at strict 0.3688, blending rejected as a tie that needs tuning)
   - Do: `src/rrf.py`, RRF by hand, k = 60, over the top 100 from BM25 patched (= `bm25_rewrite_v3`, class boosts only; item 4 rejected synonyms and spell) and the top 100 from the best vector index. Unit test against a small example worked out by hand.
   - Runs: `hybrid_rrf60`, `blend_w0.3`, `blend_w0.5`, `blend_w0.7` (scores min-max normalised to 0 to 1 per query).
   - Done when: four runs logged, the RRF test passes, compare written, `DECISIONS.md` "Hybrid ranking" entry.

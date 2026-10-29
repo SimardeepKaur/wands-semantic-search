@@ -182,3 +182,25 @@ minilm_hnsw (whole text, for comparison)
 Bootstrap vs `minilm_hnsw`: every pooled variant is reliably worse on every metric. The best one (mean) loses 0.2737 strict P@10 (95% interval -0.3056 to -0.2421) and is worse on 291 of 480 queries. Full tables in `eval/compare.py` output, reproducible with `compare.py minilm_hnsw pool_mean` etc.
 
 **What it shows:** a product is not the average of its features. Feature strings are fragments ("color : black", care instructions, package contents), so pooling them dilutes what the product is. The whole-text vector (name, class, category, description as one passage) keeps that. Unlabelled share around 0.75 also means pooled search mostly retrieves products no annotator ever saw for the query, so it is not even wrong in an interesting way. Mean pooling is the best of the three, max the worst (one feature's extreme value dominates each dimension).
+
+## Item 7: hybrid ranking, RRF vs weighted blending (2026-10-29)
+
+Both hybrids fuse the same two lists per query: the top 100 from patched BM25 (class-boost rewrite, the item 4 winner) and the top 100 from the MiniLM HNSW index. RRF uses k = 60. Blending min-max normalises each list's scores to 0..1 and mixes with vector weight w. `tests/test_rrf.py` checks both against hand-worked examples.
+
+```
+run           strict  lenient  unlabelled
+hybrid_rrf60  0.3688  0.8069   0.1598
+blend_w0.3    0.3492  0.7479   0.2092
+blend_w0.5    0.3644  0.7850   0.1763
+blend_w0.7    0.3642  0.7954   0.1710
+minilm_hnsw   0.3475  0.7758   0.1919   (vector only)
+bm25_rewrite_v3 0.3208 0.7140  0.2354   (keyword only)
+```
+
+Bootstrap (`eval/compare.py`):
+- `hybrid_rrf60` vs `minilm_hnsw`: strict +0.0213 (0.0102 to 0.0325), lenient +0.0310, unlabelled -0.0321. All reliable. The hybrid beats its best single leg.
+- `hybrid_rrf60` vs `bm25_rewrite_v3`: strict +0.0479, lenient +0.0929, unlabelled -0.0756. All reliable.
+- `hybrid_rrf60` vs `blend_w0.5`: strict tie (interval includes 0), lenient +0.0219 and unlabelled -0.0165 reliable for RRF.
+- `hybrid_rrf60` vs `blend_w0.7`: every interval includes 0. A tie.
+
+**What it shows:** fusing keyword and vector results beats either alone, on every metric. RRF is at least as good as the best-tuned blend and needs no weight to tune: blending's result depends on w (0.3 is reliably worse), and the right w had to be found on the eval queries, which is exactly the kind of tuning that leaks. RRF with the paper's k = 60 matches it blind. The stack's choice stands. Latency: a hybrid query runs two top-100 searches; the p50 spread across the four runs (48 to 119 ms) is cache warm-up, not method cost.

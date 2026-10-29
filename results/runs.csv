@@ -18,3 +18,7 @@ minilm_hnsw,2026-10-29,8cc6160,minilm_hnsw,0.3475,0.7758,0.1919,same text as mpn
 pool_mean,2026-10-29,14256d5,pool_mean,0.0738,0.2515,0.7271,"item 6 pooling, MiniLM feature vectors, HNSW"
 pool_max,2026-10-29,14256d5,pool_max,0.0469,0.1762,0.8094,"item 6 pooling, MiniLM feature vectors, HNSW"
 pool_top3,2026-10-29,14256d5,pool_top3,0.0525,0.2108,0.7615,"item 6 pooling, MiniLM feature vectors, HNSW"
+hybrid_rrf60,2026-10-29,a8c5838,hybrid_rrf60,0.3688,0.8069,0.1598,item 7: RRF k=60 over bm25_rewrite top100 + minilm_hnsw top100
+blend_w0.3,2026-10-29,a8c5838,blend_w0.3,0.3492,0.7479,0.2092,"item 7: min-max blend, vector weight 0.3, same two top-100 lists"
+blend_w0.5,2026-10-29,a8c5838,blend_w0.5,0.3644,0.785,0.1763,"item 7: min-max blend, vector weight 0.5, same two top-100 lists"
+blend_w0.7,2026-10-29,a8c5838,blend_w0.7,0.3642,0.7954,0.171,"item 7: min-max blend, vector weight 0.7, same two top-100 lists"
