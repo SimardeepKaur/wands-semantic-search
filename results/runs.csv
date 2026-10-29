@@ -6,3 +6,5 @@ bm25_syn,2026-10-28,19fbba1,bm25_syn,0.3069,0.6735,0.2694,patch resources from p
 bm25_spell,2026-10-28,19fbba1,bm25_spell,0.3154,0.6767,0.2679,patch resources from product.csv only
 bm25_rewrite,2026-10-28,19fbba1,bm25_rewrite,0.316,0.7083,0.2404,patch resources from product.csv only
 bm25_patched,2026-10-28,19fbba1,bm25_patched,0.3056,0.6821,0.2648,patch resources from product.csv only
+bm25_spell_v2,2026-10-28,768d013,bm25_spell,0.3173,0.6781,0.2667,vocab from all text fields; v1 corrected real words
+bm25_patched_v2,2026-10-28,768d013,bm25_patched,0.3075,0.6835,0.2635,"all three patches, fixed spell vocab"

@@ -28,7 +28,12 @@ MIN_SHARE = 0.55     # and at least this share of them must sit in one class
 
 
 def words(text):
-    return re.findall(r"[a-z]+", text.lower())
+    """Lowercase tokens, keeping digits and decimals: "E12/Candelabra 4.5" -> e12, candelabra, 4.5.
+
+    v2 kept letters only, which silently dropped "e12", "7", "48" and "4.5" from
+    queries before search. That alone cost strict P@10 on queries with sizes in them.
+    """
+    return re.findall(r"[a-z0-9]+(?:\.[0-9]+)?", text.lower())
 
 
 def build_resources(force=False):
