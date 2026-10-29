@@ -61,3 +61,9 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Rejected:** Mean pooling over the product's feature vectors (strict P@10 0.0738 vs 0.3475, -0.2737, 95% interval -0.3056 to -0.2421). Element-wise max (0.0469). Top-3 centroid (0.0525). All reliably worse on every metric, with unlabelled share around 0.75.
 - **Evidence:** runs `pool_mean`, `pool_max`, `pool_top3` vs `minilm_hnsw` in `results/runs.csv`; tables in `docs/experiments.md` item 6.
 - **Why (in my words):**
+
+### Hybrid ranking
+- **Chosen:** Reciprocal Rank Fusion, hand-written, k = 60, over the top 100 from patched BM25 and the top 100 from the MiniLM index. New best system: strict P@10 0.3688, lenient 0.8069, unlabelled 0.1598.
+- **Rejected:** Weighted score blending (min-max, vector weight 0.3 / 0.5 / 0.7). The best blend ties RRF on strict (0.3644, interval includes 0) and loses on lenient and unlabelled at w = 0.5; w = 0.3 is reliably worse. Blending also needs its weight tuned per corpus, and tuning it on the eval queries would leak. Vector-only and keyword-only both reliably worse than the hybrid.
+- **Evidence:** runs `hybrid_rrf60`, `blend_w0.3`, `blend_w0.5`, `blend_w0.7` in `results/runs.csv`; bootstrap tables in `docs/experiments.md` item 7.
+- **Why (in my words):**

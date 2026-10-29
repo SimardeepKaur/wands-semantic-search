@@ -7,3 +7,7 @@ date,experiment,metric,value,notes
 2026-10-29,query_latency,mpnet_exact_p99_ms,158.0,
 2026-10-29,query_latency,minilm_hnsw_p50_ms,16.4,
 2026-10-29,query_latency,minilm_hnsw_p99_ms,152.5,
+2026-10-29,query_latency,hybrid_rrf60_p50_ms,119.3,"two top-100 searches per query; first of the four hybrid runs, cold caches"
+2026-10-29,query_latency,hybrid_rrf60_p99_ms,638.0,
+2026-10-29,query_latency,blend_w0.7_p50_ms,48.2,"same two searches, warm caches; the spread across hybrid runs is warm-up, not method"
+2026-10-29,query_latency,blend_w0.7_p99_ms,107.4,
