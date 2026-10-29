@@ -23,3 +23,7 @@ Not finished (carry over): everything in "What is left to build" in CLAUDE.md, s
 Numbers recorded: none.
 Things that broke, and why: none.
 Next session starts with: ask the user for the four setup steps in CLAUDE.md, then build item 1.
+
+Date: 2026-10-28 (build loop)
+Built: item 1 (gh 2.103.3 and kind 0.33.0 in ~/.local/bin, checksums checked; .venv; public repo SimardeepKaur/wands-semantic-search). Docker memory set to 6 GB. Item 2 (fuzzy experiment, eval/fuzzy_experiment.py, docs/experiments.md).
+Things that broke, and why: the container name `es` was taken by a stopped container from the teaching copy. Renamed this project's container to `wands-es` and left the other one alone.

@@ -31,3 +31,9 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Rejected:** Plain BM25 as the baseline (too weak: any synonym-aware method beats it). Fuzzy matching alone (fixes typos, not synonyms).
 - **Evidence:** not measured.
 - **Why (in my words):**
+
+### Fuzzy matching
+- **Chosen:** No fuzzy matching by default. Spelling is handled by spell correction in the patched baseline (item 4).
+- **Rejected:** `fuzziness: AUTO` on every query.
+- **Evidence:** `docs/experiments.md`, item 2. On "ligth bulb" fuzzy brings in the Light Bulbs class. On "toddler couch fold out" it brings in unrelated products and cannot map "couch" to "sofa". Full-set run: `bm25_fuzzy` (pending, item 3).
+- **Why (in my words):**
