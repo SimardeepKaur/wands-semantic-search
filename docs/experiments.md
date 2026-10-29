@@ -165,3 +165,20 @@ Latency per query, eval client (includes CPU query encoding): mpnet_hnsw p50 63.
 - HNSW loses nothing measurable against exact search at 43k products (every interval includes 0). At this corpus size exact is nearly as fast because query encoding dominates. HNSW is kept for scale.
 - Vector search beats plain BM25 reliably on every metric (strict +0.0246, lenient +0.0867, unlabelled -0.0635 for MiniLM).
 - MiniLM beats MPNet on strict P@10 (+0.0160, interval 0.0035 to 0.0281) and unlabelled share, with 4x faster query encoding and half the vector size. This contradicts the stack's encoder choice. Build paused for the user's decision, as the plan requires.
+
+## Item 6: feature pooling (2026-10-29)
+
+Each product lists its features as `key : value` strings (128,919 unique across the catalogue, median 55 per product). Each unique feature was encoded once with MiniLM (3.7 min on CPU, 582/s), then each product got three pooled vectors: the mean of its feature vectors, the element-wise max, and the top-3 centroid (mean of the 3 feature vectors closest to the product's own mean). One HNSW index each.
+
+```
+run        strict  lenient  unlabelled  p50 per query
+pool_mean  0.0738  0.2515   0.7271      21.3 ms
+pool_max   0.0469  0.1762   0.8094      29.7 ms
+pool_top3  0.0525  0.2108   0.7615      23.6 ms
+minilm_hnsw (whole text, for comparison)
+           0.3475  0.7758   0.1919      16.4 ms
+```
+
+Bootstrap vs `minilm_hnsw`: every pooled variant is reliably worse on every metric. The best one (mean) loses 0.2737 strict P@10 (95% interval -0.3056 to -0.2421) and is worse on 291 of 480 queries. Full tables in `eval/compare.py` output, reproducible with `compare.py minilm_hnsw pool_mean` etc.
+
+**What it shows:** a product is not the average of its features. Feature strings are fragments ("color : black", care instructions, package contents), so pooling them dilutes what the product is. The whole-text vector (name, class, category, description as one passage) keeps that. Unlabelled share around 0.75 also means pooled search mostly retrieves products no annotator ever saw for the query, so it is not even wrong in an interesting way. Mean pooling is the best of the three, max the worst (one feature's extreme value dominates each dimension).
