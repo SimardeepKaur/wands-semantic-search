@@ -96,19 +96,19 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
 
 ### Phase C: vectors
 
-- [x] **5. Vectors** (done; encoder choice went to the user: MiniLM measured better than MPNet)
+- [x] **5. Vectors** (done; the user switched the stack's encoder to MiniLM on 2026-10-29: MiniLM measured better than MPNet. Items 6-9 use `minilm`.)
   - Do: `src/encode.py` encodes each product with `all-mpnet-base-v2` on MPS (Elasticsearch stopped). Product text: name, product class, category path, then description, cut to the model's input limit. Index a `dense_vector` field with HNSW (cosine). Add vector search to `src/search.py`.
   - Runs: `mpnet_hnsw`, `mpnet_exact` (`script_score`), `minilm_hnsw`.
   - Also measured, in `results/perf.csv`: time per query for HNSW vs exact search (p50, p99 over 480 queries), and query encoding time on CPU for MPNet vs MiniLM.
   - Done when: the vector file has 42,994 rows, no NaN values and unit norms. Three runs logged. Timings logged. `DECISIONS.md` has "Encoder" and "Exact vs HNSW" entries.
 
 - [ ] **6. Pooling**
-  - Do: encode each of the 128,919 unique feature strings once, then build per-product vectors by lookup:
+  - Do: encode each of the 128,919 unique feature strings once with MiniLM (the chosen encoder), then build per-product vectors by lookup:
     - Mean: average of the product's feature vectors.
     - Max: element-wise max, then normalised.
     - Top-3 centroid: the mean of the 3 feature vectors closest to the product's mean vector (its 3 most typical features).
     - One index each.
-  - Runs: `pool_mean`, `pool_max`, `pool_top3`, compared with `mpnet_hnsw`.
+  - Runs: `pool_mean`, `pool_max`, `pool_top3`, compared with `minilm_hnsw` (the whole-text vector of the chosen encoder).
   - Done when: three runs logged, compare written, `DECISIONS.md` "Pooling" entry.
 
 ### Phase D: hybrid

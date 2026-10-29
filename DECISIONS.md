@@ -50,8 +50,8 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Evidence:** Runs `mpnet_hnsw` vs `mpnet_exact`: strict 0.3315 vs 0.3333, every 95% interval includes 0, so no measurable quality loss. Latency p50 63.5 vs 73.6 ms at 43k products (query encoding dominates at this size; HNSW is the scalable choice).
 - **Why (in my words):**
 
-### Encoder (DECISION PENDING: measurement contradicts the stack)
-- **Stack says:** `all-mpnet-base-v2`, with MiniLM as the rejected alternative.
-- **Measured:** `minilm_hnsw` beats `mpnet_hnsw` on strict P@10: 0.3475 vs 0.3315 (+0.0160, 95% interval 0.0035 to 0.0281, reliable). Also fewer unlabelled results, 4x faster query encoding (16.4 vs 63.5 ms p50), 6x faster product encoding, half the vector size.
-- **Evidence:** runs `mpnet_hnsw`, `mpnet_exact`, `minilm_hnsw`; `docs/experiments.md` item 5.
+### Encoder
+- **Chosen:** `all-MiniLM-L6-v2`. The stack originally fixed `all-mpnet-base-v2`; the measurement said otherwise and the user agreed to switch (2026-10-29). All later work (pooling, hybrid, LoRA, the service) uses MiniLM.
+- **Rejected:** `all-mpnet-base-v2` (bigger and slower, and it scored lower here). Calling an LLM to embed (cost and latency, not measured).
+- **Evidence:** `minilm_hnsw` beats `mpnet_hnsw` on strict P@10: 0.3475 vs 0.3315 (+0.0160, 95% interval 0.0035 to 0.0281, reliable). Also fewer unlabelled results (0.1919 vs 0.2115), 4x faster query encoding (16.4 vs 63.5 ms p50), 6x faster product encoding (7.7 vs 46.1 min), half the vector size (384 vs 768). Runs `mpnet_hnsw`, `mpnet_exact`, `minilm_hnsw`; `docs/experiments.md` item 5.
 - **Why (in my words):**
