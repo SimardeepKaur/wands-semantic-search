@@ -16,8 +16,8 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 
 ### Headline metric
 - **Chosen:** Strict precision@10 (only Exact counts). Lenient P@10 and unlabelled share reported next to it.
-- **Rejected:** Lenient P@10 as headline (near its 0.986 ceiling, blind to brand and colour). nDCG@10 with graded credit (credit weights are a guess).
-- **Evidence:** Ceilings from the labels: strict 0.599, lenient 0.986. No eval run yet.
+- **Rejected:** Lenient P@10 as headline (near its 0.9858 ceiling, blind to brand and colour). nDCG@10 with graded credit (credit weights are a guess).
+- **Evidence:** Ceilings from run `oracle`: strict 0.5975, lenient 0.9858.
 - **Why (in my words):**
 
 ### Text analyzer

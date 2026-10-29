@@ -105,7 +105,7 @@ Verify column names against the files before relying on them.
 - **Precision@10, strict:** only Exact counts as relevant. This is the headline metric.
 - **Precision@10, lenient:** Exact and Partial both count.
 - **Unlabelled share:** fraction of the top 10 with no label for that query. Unlabelled results count as not relevant in both scores. It is a warning light: when it rises, the scores are less trustworthy (labels came from earlier systems, so new methods are biased against).
-- **Ceilings** (best possible, from the labels): strict 0.599, lenient 0.986. Strict is capped because 101 queries have 0 Exact labels.
+- **Ceilings** (best possible, from the labels): strict 0.5975, lenient 0.9858 (run `oracle` in `runs.csv`). Strict is capped because 101 queries have 0 Exact labels. An earlier figure of 0.599 counted repeated label rows twice.
 - Every eval uses all 480 queries unless the run name says otherwise.
 - `results/runs.csv` columns: `run_name, date, git_commit, method, p10_strict, p10_lenient, unlabelled_share, notes`.
 

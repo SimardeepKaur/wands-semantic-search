@@ -39,7 +39,7 @@ One iteration does one item, or one clear part of a large item (item 8 has five 
 
 The eval script refuses to log a run if any of these fail:
 - All 480 queries were scored (unless the run name says otherwise).
-- `p10_strict <= 0.599` and `p10_lenient <= 0.986` (the ceilings). A score above a ceiling means a bug.
+- Scores at or below the ceilings, strict 0.5975 and lenient 0.9858, computed from the labels on every run. A score above a ceiling means a bug.
 - The git tree is clean, so `git_commit` in `runs.csv` points at the code that made the number.
 - Per-query results are saved to `results/per_query/<run_name>.csv`.
 
@@ -84,7 +84,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
 
 - [ ] **3. Eval**
   - Do: `eval/run_eval.py` (all 480 queries, strict and lenient P@10, unlabelled share, per-query file, appends to `runs.csv` with the commit). `eval/compare.py <run_a> <run_b>` for the paired bootstrap.
-  - Done when: an "oracle" run (labelled Exact products ranked first, then Partial) gives exactly the known ceilings, strict 0.599 and lenient 0.986. This proves the scorer. The oracle row is logged with method `oracle`. `bm25_plain` and `bm25_fuzzy` are logged, and `bm25_fuzzy` is added to the "Fuzzy matching" entry in `DECISIONS.md`.
+  - Done when: an "oracle" run (labelled Exact products ranked first, then Partial) gives exactly the ceilings computed from the labels (strict 0.5975, lenient 0.9858). This proves the scorer. The oracle row is logged with method `oracle`. `bm25_plain` and `bm25_fuzzy` are logged, and `bm25_fuzzy` is added to the "Fuzzy matching" entry in `DECISIONS.md`.
 
 - [ ] **4. Baselines**
   - Do: BM25 plus linguistic patching. Built from `product.csv` only:
