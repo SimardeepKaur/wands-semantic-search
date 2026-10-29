@@ -8,8 +8,11 @@ not the name.
 Vectors are unit-normalised, so cosine similarity is a dot product. The script checks
 shape, NaN and norms before saving, and saves product ids next to the vectors.
 
-Runs on the Mac's GPU (MPS) when available. Stop Elasticsearch first: 8 GB of RAM
-does not fit both.
+Encodes in chunks of 2,000 and saves each chunk to data/vectors/parts/, so a killed
+run resumes where it stopped. The merged .npy is written at the end.
+
+Device: --device cpu or mps. On this 8 GB Mac, MPS stalled twice with the whole
+system swapped out (see PROGRESS.md 2026-10-29), so cpu is the default.
 
 Usage:
     python src/encode.py --model mpnet    # all-mpnet-base-v2 -> data/vectors/products_mpnet.npy
@@ -21,6 +24,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+CHUNK = 2000
 
 ROOT = Path(__file__).resolve().parents[1]
 PRODUCTS_CSV = ROOT / "data/WANDS/dataset/product.csv"
@@ -44,20 +49,37 @@ def product_texts():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", choices=MODELS, required=True)
-    parser.add_argument("--batch-size", type=int, default=64)
+    parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--device", choices=["cpu", "mps"], default="cpu")
     args = parser.parse_args()
 
     import torch
     from sentence_transformers import SentenceTransformer
 
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
-    model = SentenceTransformer(MODELS[args.model], device=device)
+    torch.set_num_threads(4)  # the M2's performance cores; leave the rest to the OS
+    model = SentenceTransformer(MODELS[args.model], device=args.device)
     ids, texts = product_texts()
-    print(f"{args.model} on {device}: {len(texts)} products, batch {args.batch_size}")
+    parts_dir = VECTORS_DIR / "parts"
+    parts_dir.mkdir(parents=True, exist_ok=True)
+    print(f"{args.model} on {args.device}: {len(texts)} products, batch {args.batch_size}",
+          flush=True)
 
     start = time.time()
-    vectors = model.encode(texts, batch_size=args.batch_size, normalize_embeddings=True,
-                           show_progress_bar=False)
+    chunks = []
+    for lo in range(0, len(texts), CHUNK):
+        part = parts_dir / f"{args.model}_{lo:06d}.npy"
+        if part.exists():
+            chunks.append(np.load(part))
+            continue
+        vecs = model.encode(texts[lo:lo + CHUNK], batch_size=args.batch_size,
+                            normalize_embeddings=True, show_progress_bar=False)
+        np.save(part, vecs.astype(np.float32))
+        chunks.append(vecs.astype(np.float32))
+        done = min(lo + CHUNK, len(texts))
+        rate = done / (time.time() - start)
+        print(f"  {done}/{len(texts)} ({rate:.0f}/s, ~{(len(texts) - done) / rate / 60:.0f} min left)",
+              flush=True)
+    vectors = np.vstack(chunks)
     took = time.time() - start
 
     assert vectors.shape[0] == len(ids), vectors.shape
