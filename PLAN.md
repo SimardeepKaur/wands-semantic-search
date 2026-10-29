@@ -59,7 +59,7 @@ The eval script refuses to log a run if any of these fail:
 ### Memory rules (8 GB RAM)
 
 - Never at the same time: Elasticsearch, kind, model training or bulk encoding.
-- Bulk encoding and training run with Elasticsearch stopped. Vectors are saved to `data/vectors/` first, then Elasticsearch starts and indexes them.
+- Bulk encoding and training run with Docker Desktop quit entirely (`osascript -e 'quit app "Docker"'`), not just containers stopped: the Docker VM holds its memory either way. Restart Docker afterwards. Vectors are saved to `data/vectors/` first, then Elasticsearch starts and indexes them.
 - Before item 15, stop the Docker Compose services.
 - Before any heavy job, check `docker ps` and free memory.
 
@@ -96,7 +96,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
 
 ### Phase C: vectors
 
-- [ ] **5. Vectors**
+- [x] **5. Vectors** (done; encoder choice went to the user: MiniLM measured better than MPNet)
   - Do: `src/encode.py` encodes each product with `all-mpnet-base-v2` on MPS (Elasticsearch stopped). Product text: name, product class, category path, then description, cut to the model's input limit. Index a `dense_vector` field with HNSW (cosine). Add vector search to `src/search.py`.
   - Runs: `mpnet_hnsw`, `mpnet_exact` (`script_score`), `minilm_hnsw`.
   - Also measured, in `results/perf.csv`: time per query for HNSW vs exact search (p50, p99 over 480 queries), and query encoding time on CPU for MPNet vs MiniLM.

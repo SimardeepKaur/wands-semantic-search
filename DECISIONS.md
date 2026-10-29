@@ -43,3 +43,15 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Rejected:** Product-only synonym expansion (strict -0.0104, 95% interval -0.0188 to -0.0025). Spell correction (strict +0.0017, interval includes 0, tie goes to the simpler option). Fuzzy matching (see above).
 - **Evidence:** runs `bm25_syn_v3`, `bm25_spell_v3`, `bm25_rewrite_v3`, `bm25_patched_v3` vs `bm25_plain` in `results/runs.csv`; bootstrap tables in `docs/experiments.md`. Rewrite: lenient +0.0248 (0.0067 to 0.0425), unlabelled share -0.0200, strict unchanged.
 - **Why (in my words):**
+
+### Exact vector search vs HNSW
+- **Chosen:** HNSW (Elasticsearch's indexed dense_vector).
+- **Rejected:** Exact search by script_score.
+- **Evidence:** Runs `mpnet_hnsw` vs `mpnet_exact`: strict 0.3315 vs 0.3333, every 95% interval includes 0, so no measurable quality loss. Latency p50 63.5 vs 73.6 ms at 43k products (query encoding dominates at this size; HNSW is the scalable choice).
+- **Why (in my words):**
+
+### Encoder (DECISION PENDING: measurement contradicts the stack)
+- **Stack says:** `all-mpnet-base-v2`, with MiniLM as the rejected alternative.
+- **Measured:** `minilm_hnsw` beats `mpnet_hnsw` on strict P@10: 0.3475 vs 0.3315 (+0.0160, 95% interval 0.0035 to 0.0281, reliable). Also fewer unlabelled results, 4x faster query encoding (16.4 vs 63.5 ms p50), 6x faster product encoding, half the vector size.
+- **Evidence:** runs `mpnet_hnsw`, `mpnet_exact`, `minilm_hnsw`; `docs/experiments.md` item 5.
+- **Why (in my words):**

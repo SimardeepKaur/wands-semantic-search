@@ -134,3 +134,34 @@ unlabelled_share      0.2554           0.2577  0.0023 -0.0152   0.0206       Fal
 - Spell: a wash (only 4 queries change much; "ligth->light" helps, "pedistole->pistol" hurts). Tie goes to the simpler option. Rejected.
 - Rewrite (class boosts): strict unchanged, lenient +0.0248 and unlabelled share -0.0200, both reliable. This is the patched baseline.
 - The bar for vectors and hybrid: strict 0.3229 (bm25_plain), lenient 0.7140 (bm25_rewrite_v3).
+
+## Item 5: vector search (2026-10-29)
+
+Product text encoded: name, class, category path, description (in that order, cut at the model's input limit). Encoding ran on CPU after MPS stalled twice on this 8 GB machine (see PROGRESS.md). MPNet: 46.1 min. MiniLM: 7.7 min.
+
+Bootstrap comparisons (`eval/compare.py`):
+
+```
+== mpnet_hnsw vs mpnet_exact
+          metric  mpnet_hnsw  mpnet_exact    diff  ci_low  ci_high  excludes_0  better  worse  same
+      p10_strict      0.3315       0.3333  0.0019 -0.0008   0.0046       False      17     11   452
+     p10_lenient      0.7627       0.7640  0.0012 -0.0025   0.0054       False      27     25   428
+unlabelled_share      0.2115       0.2073 -0.0042 -0.0096   0.0002       False      18     28   434
+== mpnet_hnsw vs minilm_hnsw
+          metric  mpnet_hnsw  minilm_hnsw    diff  ci_low  ci_high  excludes_0  better  worse  same
+      p10_strict      0.3315       0.3475  0.0160  0.0035   0.0281        True     111     80   289
+     p10_lenient      0.7627       0.7758  0.0131 -0.0037   0.0298       False     130     95   255
+unlabelled_share      0.2115       0.1919 -0.0196 -0.0350  -0.0040        True      87    127   266
+== bm25_plain vs minilm_hnsw
+          metric  bm25_plain  minilm_hnsw    diff  ci_low  ci_high  excludes_0  better  worse  same
+      p10_strict      0.3229       0.3475  0.0246  0.0073   0.0423        True     125     99   256
+     p10_lenient      0.6892       0.7758  0.0867  0.0627   0.1119        True     213     88   179
+unlabelled_share      0.2554       0.1919 -0.0635 -0.0881  -0.0388        True     103    191   186
+```
+
+Latency per query, eval client (includes CPU query encoding): mpnet_hnsw p50 63.5 ms / p99 354.2 ms; mpnet_exact p50 73.6 ms / p99 158.0 ms; minilm_hnsw p50 16.4 ms / p99 152.5 ms.
+
+**What it shows:**
+- HNSW loses nothing measurable against exact search at 43k products (every interval includes 0). At this corpus size exact is nearly as fast because query encoding dominates. HNSW is kept for scale.
+- Vector search beats plain BM25 reliably on every metric (strict +0.0246, lenient +0.0867, unlabelled -0.0635 for MiniLM).
+- MiniLM beats MPNet on strict P@10 (+0.0160, interval 0.0035 to 0.0281) and unlabelled share, with 4x faster query encoding and half the vector size. This contradicts the stack's encoder choice. Build paused for the user's decision, as the plan requires.
