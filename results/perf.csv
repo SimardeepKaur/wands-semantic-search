@@ -1,0 +1,9 @@
+date,experiment,metric,value,notes
+2026-10-28,encode_products,mpnet_minutes,46.1,"CPU 4 threads batch 16, 42994 products, 16/s"
+2026-10-28,encode_products,minilm_minutes,7.7,"CPU 4 threads batch 32, 93/s"
+2026-10-29,query_latency,mpnet_hnsw_p50_ms,63.5,"eval client, includes CPU query encoding"
+2026-10-29,query_latency,mpnet_hnsw_p99_ms,354.2,
+2026-10-29,query_latency,mpnet_exact_p50_ms,73.6,"script_score over 43k products"
+2026-10-29,query_latency,mpnet_exact_p99_ms,158.0,
+2026-10-29,query_latency,minilm_hnsw_p50_ms,16.4,
+2026-10-29,query_latency,minilm_hnsw_p99_ms,152.5,

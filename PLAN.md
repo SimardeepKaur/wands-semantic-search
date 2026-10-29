@@ -96,7 +96,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
 
 ### Phase C: vectors
 
-- [ ] **5. Vectors**
+- [x] **5. Vectors** (done; encoder choice went to the user: MiniLM measured better than MPNet)
   - Do: `src/encode.py` encodes each product with `all-mpnet-base-v2` on MPS (Elasticsearch stopped). Product text: name, product class, category path, then description, cut to the model's input limit. Index a `dense_vector` field with HNSW (cosine). Add vector search to `src/search.py`.
   - Runs: `mpnet_hnsw`, `mpnet_exact` (`script_score`), `minilm_hnsw`.
   - Also measured, in `results/perf.csv`: time per query for HNSW vs exact search (p50, p99 over 480 queries), and query encoding time on CPU for MPNet vs MiniLM.

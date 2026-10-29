@@ -12,3 +12,6 @@ bm25_syn_v3,2026-10-28,c24dbb1,bm25_syn,0.3125,0.6812,0.2617,digit-keeping token
 bm25_spell_v3,2026-10-28,c24dbb1,bm25_spell,0.3246,0.6871,0.2581,digit-keeping tokenizer; earlier bm25_spell rows dropped digits
 bm25_rewrite_v3,2026-10-28,c24dbb1,bm25_rewrite,0.3208,0.714,0.2354,digit-keeping tokenizer; earlier bm25_rewrite rows dropped digits
 bm25_patched_v3,2026-10-28,c24dbb1,bm25_patched,0.3123,0.69,0.2577,digit-keeping tokenizer; earlier bm25_patched rows dropped digits
+mpnet_hnsw,2026-10-29,8cc6160,mpnet_hnsw,0.3315,0.7627,0.2115,"doc text: name, class, category, description; CPU query encoding"
+mpnet_exact,2026-10-29,8cc6160,mpnet_exact,0.3333,0.764,0.2073,script_score over all 43k products
+minilm_hnsw,2026-10-29,8cc6160,minilm_hnsw,0.3475,0.7758,0.1919,same text as mpnet
