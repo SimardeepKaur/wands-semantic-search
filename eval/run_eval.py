@@ -84,6 +84,20 @@ def method_bm25(fuzzy):
     return run
 
 
+def method_patched(synonyms, spell, rewrite):
+    from elasticsearch import Elasticsearch
+    from patch import bm25_patched, build_resources
+    from search import ES_URL
+    es = Elasticsearch(ES_URL)
+    resources = build_resources()
+
+    def run(_qid, text):
+        hits = bm25_patched(es, text, K, synonyms=synonyms, spell=spell,
+                            rewrite=rewrite, resources=resources)
+        return [h["product_id"] for h in hits]
+    return run
+
+
 def get_method(name, labels):
     if name == "oracle":
         return method_oracle(labels)
@@ -91,6 +105,14 @@ def get_method(name, labels):
         return method_bm25(fuzzy=False)
     if name == "bm25_fuzzy":
         return method_bm25(fuzzy=True)
+    if name == "bm25_syn":
+        return method_patched(True, False, False)
+    if name == "bm25_spell":
+        return method_patched(False, True, False)
+    if name == "bm25_rewrite":
+        return method_patched(False, False, True)
+    if name == "bm25_patched":
+        return method_patched(True, True, True)
     raise SystemExit(f"Unknown method {name!r}")
 
 
