@@ -37,3 +37,9 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Rejected:** `fuzziness: AUTO` on every query.
 - **Evidence:** `docs/experiments.md`, item 2. On "ligth bulb" fuzzy brings in the Light Bulbs class. On "toddler couch fold out" it brings in unrelated products and cannot map "couch" to "sofa". Full set (runs `bm25_plain`, `bm25_fuzzy`): strict P@10 0.3229 -> 0.2977, difference -0.0252, 95% interval -0.0365 to -0.0140. Fuzzy is better on 48 queries and worse on 95. Lenient also drops (0.6892 -> 0.6381) and unlabelled share rises (0.2554 -> 0.3090). Median time per query 13.0 ms -> 29.7 ms.
 - **Why (in my words):**
+
+### What goes into the patched baseline
+- **Chosen:** BM25 plus class-boost query rewriting only (`bm25_rewrite_v3`). Plain BM25 stays the floor and the strict bar.
+- **Rejected:** Product-only synonym expansion (strict -0.0104, 95% interval -0.0188 to -0.0025). Spell correction (strict +0.0017, interval includes 0, tie goes to the simpler option). Fuzzy matching (see above).
+- **Evidence:** runs `bm25_syn_v3`, `bm25_spell_v3`, `bm25_rewrite_v3`, `bm25_patched_v3` vs `bm25_plain` in `results/runs.csv`; bootstrap tables in `docs/experiments.md`. Rewrite: lenient +0.0248 (0.0067 to 0.0425), unlabelled share -0.0200, strict unchanged.
+- **Why (in my words):**

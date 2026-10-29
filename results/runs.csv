@@ -8,3 +8,7 @@ bm25_rewrite,2026-10-28,19fbba1,bm25_rewrite,0.316,0.7083,0.2404,patch resources
 bm25_patched,2026-10-28,19fbba1,bm25_patched,0.3056,0.6821,0.2648,patch resources from product.csv only
 bm25_spell_v2,2026-10-28,768d013,bm25_spell,0.3173,0.6781,0.2667,vocab from all text fields; v1 corrected real words
 bm25_patched_v2,2026-10-28,768d013,bm25_patched,0.3075,0.6835,0.2635,"all three patches, fixed spell vocab"
+bm25_syn_v3,2026-10-28,c24dbb1,bm25_syn,0.3125,0.6812,0.2617,digit-keeping tokenizer; earlier bm25_syn rows dropped digits
+bm25_spell_v3,2026-10-28,c24dbb1,bm25_spell,0.3246,0.6871,0.2581,digit-keeping tokenizer; earlier bm25_spell rows dropped digits
+bm25_rewrite_v3,2026-10-28,c24dbb1,bm25_rewrite,0.3208,0.714,0.2354,digit-keeping tokenizer; earlier bm25_rewrite rows dropped digits
+bm25_patched_v3,2026-10-28,c24dbb1,bm25_patched,0.3123,0.69,0.2577,digit-keeping tokenizer; earlier bm25_patched rows dropped digits

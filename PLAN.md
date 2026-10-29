@@ -86,7 +86,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
   - Do: `eval/run_eval.py` (all 480 queries, strict and lenient P@10, unlabelled share, per-query file, appends to `runs.csv` with the commit). `eval/compare.py <run_a> <run_b>` for the paired bootstrap.
   - Done when: an "oracle" run (labelled Exact products ranked first, then Partial) gives exactly the ceilings computed from the labels (strict 0.5975, lenient 0.9858). This proves the scorer. The oracle row is logged with method `oracle`. `bm25_plain` and `bm25_fuzzy` are logged, and `bm25_fuzzy` is added to the "Fuzzy matching" entry in `DECISIONS.md`.
 
-- [ ] **4. Baselines**
+- [x] **4. Baselines**
   - Do: BM25 plus linguistic patching. Built from `product.csv` only:
     - Synonyms: from product class names and the category tree.
     - Spell correction: Elasticsearch's term suggester over the product index.
@@ -114,7 +114,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
 ### Phase D: hybrid
 
 - [ ] **7. Hybrid**
-  - Do: `src/rrf.py`, RRF by hand, k = 60, over the top 100 from BM25 (patched) and the top 100 from the best vector index. Unit test against a small example worked out by hand.
+  - Do: `src/rrf.py`, RRF by hand, k = 60, over the top 100 from BM25 patched (= `bm25_rewrite_v3`, class boosts only; item 4 rejected synonyms and spell) and the top 100 from the best vector index. Unit test against a small example worked out by hand.
   - Runs: `hybrid_rrf60`, `blend_w0.3`, `blend_w0.5`, `blend_w0.7` (scores min-max normalised to 0 to 1 per query).
   - Done when: four runs logged, the RRF test passes, compare written, `DECISIONS.md` "Hybrid ranking" entry.
 
