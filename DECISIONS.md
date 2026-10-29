@@ -35,5 +35,5 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 ### Fuzzy matching
 - **Chosen:** No fuzzy matching by default. Spelling is handled by spell correction in the patched baseline (item 4).
 - **Rejected:** `fuzziness: AUTO` on every query.
-- **Evidence:** `docs/experiments.md`, item 2. On "ligth bulb" fuzzy brings in the Light Bulbs class. On "toddler couch fold out" it brings in unrelated products and cannot map "couch" to "sofa". Full-set run: `bm25_fuzzy` (pending, item 3).
+- **Evidence:** `docs/experiments.md`, item 2. On "ligth bulb" fuzzy brings in the Light Bulbs class. On "toddler couch fold out" it brings in unrelated products and cannot map "couch" to "sofa". Full set (runs `bm25_plain`, `bm25_fuzzy`): strict P@10 0.3229 -> 0.2977, difference -0.0252, 95% interval -0.0365 to -0.0140. Fuzzy is better on 48 queries and worse on 95. Lenient also drops (0.6892 -> 0.6381) and unlabelled share rises (0.2554 -> 0.3090). Median time per query 13.0 ms -> 29.7 ms.
 - **Why (in my words):**

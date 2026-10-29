@@ -82,7 +82,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
   - Do: run one typo query and one synonym query with and without `fuzziness: AUTO`. Show the top 10 with labels.
   - Done when: `docs/experiments.md` says which of the two fuzzy fixes, with the result lists. `DECISIONS.md` has a "Fuzzy matching" entry.
 
-- [ ] **3. Eval**
+- [x] **3. Eval**
   - Do: `eval/run_eval.py` (all 480 queries, strict and lenient P@10, unlabelled share, per-query file, appends to `runs.csv` with the commit). `eval/compare.py <run_a> <run_b>` for the paired bootstrap.
   - Done when: an "oracle" run (labelled Exact products ranked first, then Partial) gives exactly the ceilings computed from the labels (strict 0.5975, lenient 0.9858). This proves the scorer. The oracle row is logged with method `oracle`. `bm25_plain` and `bm25_fuzzy` are logged, and `bm25_fuzzy` is added to the "Fuzzy matching" entry in `DECISIONS.md`.
 
