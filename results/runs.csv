@@ -2,3 +2,7 @@ run_name,date,git_commit,method,p10_strict,p10_lenient,unlabelled_share,notes
 oracle,2026-10-28,210bbd3,oracle,0.5975,0.9858,0.0,scorer check: Exact first then Partial
 bm25_plain,2026-10-28,210bbd3,bm25_plain,0.3229,0.6892,0.2554,"multi_match over name, description, features"
 bm25_fuzzy,2026-10-28,210bbd3,bm25_fuzzy,0.2977,0.6381,0.309,"multi_match over name, description, features"
+bm25_syn,2026-10-28,19fbba1,bm25_syn,0.3069,0.6735,0.2694,patch resources from product.csv only
+bm25_spell,2026-10-28,19fbba1,bm25_spell,0.3154,0.6767,0.2679,patch resources from product.csv only
+bm25_rewrite,2026-10-28,19fbba1,bm25_rewrite,0.316,0.7083,0.2404,patch resources from product.csv only
+bm25_patched,2026-10-28,19fbba1,bm25_patched,0.3056,0.6821,0.2648,patch resources from product.csv only

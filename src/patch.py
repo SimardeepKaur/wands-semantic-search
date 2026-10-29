@@ -46,6 +46,14 @@ def build_resources(force=False):
             df[w] += 1
             for c in class_list:
                 by_class[w][c] += 1
+    # Spell correction must only touch words the catalogue has never seen anywhere.
+    # v1 checked product names only and "corrected" real words like "wishbone" (it is
+    # in descriptions, not names), which cost 0.7 strict P@10 on that query.
+    vocab = set(df)
+    for col in ("product_description", "product_features", "product_class",
+                "category hierarchy"):
+        for text in p[col]:
+            vocab.update(words(text))
     synonyms, boosts = {}, {}
     for w, n in df.items():
         if n < MIN_DF or len(w) < 3 or not by_class[w]:
@@ -58,17 +66,19 @@ def build_resources(force=False):
                      if t not in STOP and t[:4] != w[:4]]
         if expansion:
             synonyms[w] = " ".join(dict.fromkeys(expansion))
-    out = {"df": dict(df), "synonyms": synonyms, "boosts": boosts}
+    out = {"df": dict(df), "vocab": sorted(vocab), "synonyms": synonyms, "boosts": boosts}
     RESOURCES.parent.mkdir(parents=True, exist_ok=True)
     RESOURCES.write_text(json.dumps(out))
     return out
 
 
 def correct(es, res, query_words):
-    """Replace words that appear in no product name with the term suggester's best guess."""
+    """Replace words the catalogue has never seen with the term suggester's best guess."""
+    vocab = res["vocab"] if isinstance(res["vocab"], set) else set(res["vocab"])
+    res["vocab"] = vocab
     out = []
     for w in query_words:
-        if res["df"].get(w) or len(w) < 3:
+        if w in vocab or len(w) < 3:
             out.append(w)
             continue
         resp = es.search(index="products_live", size=0, suggest={
