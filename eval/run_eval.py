@@ -98,6 +98,29 @@ def method_patched(synonyms, spell, rewrite):
     return run
 
 
+def method_vector(model_key, exact=False):
+    import datetime as _dt
+
+    from elasticsearch import Elasticsearch
+    from sentence_transformers import SentenceTransformer
+
+    from search import ES_URL, vector_exact, vector_knn
+
+    names = {"mpnet": "sentence-transformers/all-mpnet-base-v2",
+             "minilm": "sentence-transformers/all-MiniLM-L6-v2"}
+    es = Elasticsearch(ES_URL, request_timeout=60)
+    model = SentenceTransformer(names[model_key], device="cpu")
+    index = f"products_{model_key}_{_dt.date.today():%Y%m%d}"
+    if not es.indices.exists(index=index):
+        raise SystemExit(f"Index {index} does not exist. Run src/index_vectors.py first.")
+    search = vector_exact if exact else vector_knn
+
+    def run(_qid, text):
+        vec = model.encode(text, normalize_embeddings=True).tolist()
+        return [h["product_id"] for h in search(es, index, vec, K)]
+    return run
+
+
 def get_method(name, labels):
     if name == "oracle":
         return method_oracle(labels)
@@ -113,6 +136,12 @@ def get_method(name, labels):
         return method_patched(False, False, True)
     if name == "bm25_patched":
         return method_patched(True, True, True)
+    if name == "mpnet_hnsw":
+        return method_vector("mpnet")
+    if name == "mpnet_exact":
+        return method_vector("mpnet", exact=True)
+    if name == "minilm_hnsw":
+        return method_vector("minilm")
     raise SystemExit(f"Unknown method {name!r}")
 
 

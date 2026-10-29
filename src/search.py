@@ -1,4 +1,4 @@
-"""Search the products_live alias. Day 1: plain BM25 only.
+"""Search WANDS products: plain BM25 on the alias, or vector search on a vector index.
 
 Usage:
     python src/search.py "moen matte black hooks"
@@ -11,6 +11,37 @@ from elasticsearch import Elasticsearch
 ES_URL = "http://localhost:9200"
 ALIAS = "products_live"
 FIELDS = ["product_name", "product_description", "product_features"]
+SOURCE_FIELDS = ["product_id", "product_name", "product_class"]
+
+
+def _hits(resp):
+    return [
+        {"product_id": int(h["_id"]), "score": h["_score"],
+         "product_name": h["_source"]["product_name"],
+         "product_class": h["_source"].get("product_class")}
+        for h in resp["hits"]["hits"]
+    ]
+
+
+def vector_knn(es, index, query_vector, k=10, num_candidates=100):
+    """Approximate nearest neighbours through the HNSW graph."""
+    resp = es.search(index=index, knn={
+        "field": "vector", "query_vector": query_vector,
+        "k": k, "num_candidates": num_candidates,
+    }, size=k, source=SOURCE_FIELDS)
+    return _hits(resp)
+
+
+def vector_exact(es, index, query_vector, k=10):
+    """Exact search: score every product with cosine similarity. Slow by design."""
+    resp = es.search(index=index, size=k, query={
+        "script_score": {
+            "query": {"match_all": {}},
+            "script": {"source": "cosineSimilarity(params.v, 'vector') + 1.0",
+                       "params": {"v": query_vector}},
+        },
+    }, source=SOURCE_FIELDS)
+    return _hits(resp)
 
 
 def bm25(es, query, k=10, fuzzy=False):
@@ -27,17 +58,9 @@ def bm25(es, query, k=10, fuzzy=False):
         index=ALIAS,
         size=k,
         query={"multi_match": match},
-        source=["product_id", "product_name", "product_class"],
+        source=SOURCE_FIELDS,
     )
-    return [
-        {
-            "product_id": int(hit["_id"]),
-            "score": hit["_score"],
-            "product_name": hit["_source"]["product_name"],
-            "product_class": hit["_source"].get("product_class"),
-        }
-        for hit in resp["hits"]["hits"]
-    ]
+    return _hits(resp)
 
 
 def main():
