@@ -59,7 +59,7 @@ The eval script refuses to log a run if any of these fail:
 ### Memory rules (8 GB RAM)
 
 - Never at the same time: Elasticsearch, kind, model training or bulk encoding.
-- Bulk encoding and training run with Elasticsearch stopped. Vectors are saved to `data/vectors/` first, then Elasticsearch starts and indexes them.
+- Bulk encoding and training run with Docker Desktop quit entirely (`osascript -e 'quit app "Docker"'`), not just containers stopped: the Docker VM holds its memory either way. Restart Docker afterwards. Vectors are saved to `data/vectors/` first, then Elasticsearch starts and indexes them.
 - Before item 15, stop the Docker Compose services.
 - Before any heavy job, check `docker ps` and free memory.
 
