@@ -154,11 +154,14 @@ def main():
 
     model = SentenceTransformer(BASE_MODEL, device="cpu")
     if args.mode == "lora":
-        from peft import LoraConfig, TaskType
-        model.add_adapter(LoraConfig(task_type=TaskType.FEATURE_EXTRACTION,
-                                     r=args.rank, lora_alpha=2 * args.rank,
-                                     lora_dropout=0.1,
-                                     target_modules=["query", "value"]))
+        # get_peft_model (not SentenceTransformer.add_adapter): the PeftModel wrapper
+        # gives adapter-only save_pretrained and merge_and_unload after training.
+        from peft import LoraConfig, TaskType, get_peft_model
+        model[0].auto_model = get_peft_model(
+            model[0].auto_model,
+            LoraConfig(task_type=TaskType.FEATURE_EXTRACTION, r=args.rank,
+                       lora_alpha=2 * args.rank, lora_dropout=0.1,
+                       target_modules=["query", "value"]))
 
     out = MODELS_DIR / f"{name}_trainer"
     train_args = SentenceTransformerTrainingArguments(
