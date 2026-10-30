@@ -110,9 +110,16 @@ def method_patched(synonyms, spell, rewrite):
     return run
 
 
-def method_vector(model_key, exact=False):
-    import datetime as _dt
+def latest_index(es, model_key):
+    """The newest products_<model>_<date> index. Eval used to build the name from
+    today's date, which broke the day after indexing."""
+    names = sorted(es.indices.get(index=f"products_{model_key}_*", expand_wildcards="open"))
+    if not names:
+        raise SystemExit(f"No products_{model_key}_* index. Run src/index_vectors.py first.")
+    return names[-1]
 
+
+def method_vector(model_key, exact=False):
     from elasticsearch import Elasticsearch
     from sentence_transformers import SentenceTransformer
 
@@ -120,9 +127,7 @@ def method_vector(model_key, exact=False):
 
     es = Elasticsearch(ES_URL, request_timeout=60)
     model = SentenceTransformer(QUERY_MODELS[model_key], device="cpu")
-    index = f"products_{model_key}_{_dt.date.today():%Y%m%d}"
-    if not es.indices.exists(index=index):
-        raise SystemExit(f"Index {index} does not exist. Run src/index_vectors.py first.")
+    index = latest_index(es, model_key)
     search = vector_exact if exact else vector_knn
 
     def run(_qid, text):
@@ -134,8 +139,6 @@ def method_vector(model_key, exact=False):
 def method_hybrid(kind, w=None, model_key="minilm"):
     """RRF (k=60) or weighted blend over the top 100 from the patched BM25
     (class-boost rewrite, the item 4 winner) and the top 100 from a vector index."""
-    import datetime as _dt
-
     from elasticsearch import Elasticsearch
     from sentence_transformers import SentenceTransformer
 
@@ -146,9 +149,7 @@ def method_hybrid(kind, w=None, model_key="minilm"):
     es = Elasticsearch(ES_URL, request_timeout=60)
     model = SentenceTransformer(QUERY_MODELS[model_key], device="cpu")
     resources = build_resources()
-    index = f"products_{model_key}_{_dt.date.today():%Y%m%d}"
-    if not es.indices.exists(index=index):
-        raise SystemExit(f"Index {index} does not exist. Run src/index_vectors.py first.")
+    index = latest_index(es, model_key)
     top = 100
 
     def run(_qid, text):

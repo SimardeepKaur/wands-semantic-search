@@ -23,12 +23,13 @@ def _hits(resp):
     ]
 
 
-def vector_knn(es, index, query_vector, k=10, num_candidates=100):
+def vector_knn(es, index, query_vector, k=10, num_candidates=100, es_filter=None):
     """Approximate nearest neighbours through the HNSW graph."""
-    resp = es.search(index=index, knn={
-        "field": "vector", "query_vector": query_vector,
-        "k": k, "num_candidates": num_candidates,
-    }, size=k, source=SOURCE_FIELDS)
+    knn = {"field": "vector", "query_vector": query_vector,
+           "k": k, "num_candidates": num_candidates}
+    if es_filter:
+        knn["filter"] = es_filter
+    resp = es.search(index=index, knn=knn, size=k, source=SOURCE_FIELDS)
     return _hits(resp)
 
 
@@ -44,7 +45,7 @@ def vector_exact(es, index, query_vector, k=10):
     return _hits(resp)
 
 
-def bm25(es, query, k=10, fuzzy=False):
+def bm25(es, query, k=10, fuzzy=False, es_filter=None):
     """Top k products for a query, as a list of dicts, best first.
 
     multi_match runs the query against each field and keeps the best field's BM25 score
@@ -54,10 +55,13 @@ def bm25(es, query, k=10, fuzzy=False):
     if fuzzy:
         # AUTO: words of 1-2 chars must match exactly, 3-5 chars allow 1 edit, 6+ allow 2.
         match["fuzziness"] = "AUTO"
+    query_body = {"multi_match": match}
+    if es_filter:
+        query_body = {"bool": {"must": [query_body], "filter": [es_filter]}}
     resp = es.search(
         index=ALIAS,
         size=k,
-        query={"multi_match": match},
+        query=query_body,
         source=SOURCE_FIELDS,
     )
     return _hits(resp)
