@@ -1,0 +1,35 @@
+# Deploy the public demo (item 17): after the eval gate passes on main, push
+# the assembled Space repository to Hugging Face, which builds and runs it.
+name: deploy
+
+on:
+  workflow_run:
+    workflows: [eval]
+    types: [completed]
+
+jobs:
+  space:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Assemble the Space repository
+        run: bash deploy/hf/assemble.sh /tmp/space
+
+      - name: Push to the Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          cd /tmp/space
+          git init -b main
+          git config user.name "deploy workflow"
+          git config user.email "deploy@users.noreply.github.com"
+          git add -A
+          git commit -m "Deploy ${GITHUB_SHA::7}"
+          git push --force "https://rosie95:${HF_TOKEN}@huggingface.co/spaces/rosie95/wands-search" main
