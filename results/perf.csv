@@ -32,3 +32,5 @@ date,experiment,metric,value,notes
 2026-10-30,loadtest,rate50_p99_ms,160,
 2026-10-30,docker_image,python311_full_gb,3.42,"same Dockerfile, BASE=python:3.11"
 2026-10-30,docker_image,python311_slim_gb,2.03,"chosen; the 2 GB floor is CPU torch + the baked encoder"
+2026-10-30,zero_results,bm25_rate,0.0021,"1 of 480 WANDS queries ('minnestrista', misspelled name)"
+2026-10-30,zero_results,hybrid_rate,0.0,"the vector leg always returns nearest neighbours"

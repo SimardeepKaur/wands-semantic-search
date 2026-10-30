@@ -277,3 +277,29 @@ rate                requests  failures  p50    p99
 ```
 
 The 6 req/s run starts from an empty cache, so its p99 carries the first pass of cache misses (a full uncached request is ~300-900 ms, see item 11). At 50 req/s with the cache warm the service is comfortable; the uncached ceiling of ~24 req/s from item 11 is the number to remember when the cache cannot help (all-new queries).
+
+## Item 16: request-log summary and zero-result rates (2026-10-30)
+
+All 480 WANDS queries driven once through the API (cache off, so latencies are real work). The logs are one JSON line per request; `src/log_summary.py` summarises them. Output for the committed log `results/logs/api_480_queries.jsonl`:
+
+```
+requests          480
+zero-result rate  0.0000 (0 requests)
+cache hit rate    0.0000
+latency p50       85.1 ms
+latency p99       835.5 ms
+latency mean      133.0 ms
+slowest queries (worst case per query):
+    1346.5 ms  n=10  'arwen table lamp'
+    1105.2 ms  n=10  'salon chair'
+    1024.3 ms  n=10  'smart coffee table'
+     998.5 ms  n=10  'merlyn 6'
+     835.5 ms  n=10  'tufted chair with gold legs'
+     621.7 ms  n=10  'chair and a half recliner'
+     603.5 ms  n=10  'turquoise pillows'
+     596.4 ms  n=10  'kohen 5 drawer dresser'
+     557.0 ms  n=10  'moen matte black hooks'
+     531.4 ms  n=10  'carolyn console table'
+```
+
+Zero-result rates on the same 480 queries: plain BM25 0.0021 (one query, "minnestrista", a misspelled collection name no keyword matches), hybrid 0.0000 (the vector leg always returns the nearest neighbours, so the hybrid never comes back empty). The slowest-queries list is dominated by the first requests after startup (model and resource warm-up), which is itself worth knowing from logs.
