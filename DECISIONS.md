@@ -27,9 +27,9 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Why (in my words):**
 
 ### Baseline
-- **Chosen:** BM25 plus linguistic patching: stemming, a synonym dictionary, spell correction and rule-based query rewriting. Plain BM25 kept as a floor.
-- **Rejected:** Plain BM25 as the baseline (too weak: any synonym-aware method beats it). Fuzzy matching alone (fixes typos, not synonyms).
-- **Evidence:** not measured.
+- **Chosen:** (written before measurement; superseded by "What goes into the patched baseline" below) BM25 plus linguistic patching, with plain BM25 kept as a floor. Measurement then rejected the synonym and spell parts: the kept baseline is BM25 plus class-boost rewriting only.
+- **Rejected:** Plain BM25 as the baseline (too weak a bar). Fuzzy matching alone (fixes typos, not synonyms).
+- **Evidence:** see "What goes into the patched baseline".
 - **Why (in my words):**
 
 ### Fuzzy matching

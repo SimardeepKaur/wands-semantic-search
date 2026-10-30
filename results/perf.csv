@@ -34,3 +34,8 @@ date,experiment,metric,value,notes
 2026-10-30,docker_image,python311_slim_gb,2.03,"chosen; the 2 GB floor is CPU torch + the baked encoder"
 2026-10-30,zero_results,bm25_rate,0.0021,"1 of 480 WANDS queries ('minnestrista', misspelled name)"
 2026-10-30,zero_results,hybrid_rate,0.0,"the vector leg always returns nearest neighbours"
+2026-10-30,ci_gate,green_run_strict,0.3675,"PR 15, GitHub runner, fresh index"
+2026-10-30,ci_gate,red_run_strict,0.3219,"PR 16, deliberate regression, gate failed"
+2026-10-29,finetune,lora_r4_eval_loss,0.0257,"held-out category-tree pairs; also in MLflow"
+2026-10-29,finetune,lora_r16_eval_loss,0.0154,
+2026-10-29,finetune,full_ft_eval_loss,0.0035,
