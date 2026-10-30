@@ -147,7 +147,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
   - Do: `loadtest/locustfile.py`. Runs at 6 and 50 queries per second, fixed duration.
   - Done when: p50, p99 and failure count for both rates in `results/perf.csv`.
 
-- [ ] **13. Dockerfile**
+- [x] **13. Dockerfile** (done; slim 2.03 GB vs full 3.42 GB, slim container passes the smoke checks)
   - Do: service image with CPU-only PyTorch.
   - Experiment: `python:3.11` vs `python:3.11-slim`, image size.
   - Done when: both sizes in `results/perf.csv`, the chosen image passes the item 9 smoke test, `DECISIONS.md` "Base image" entry.

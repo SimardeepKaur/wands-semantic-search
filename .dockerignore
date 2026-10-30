@@ -1,0 +1,15 @@
+.venv
+.git
+.claude
+mlruns
+results
+notebooks
+loadtest
+k8s
+docs
+tests
+data/vectors
+data/models
+# the eval files never enter the image
+data/WANDS/dataset/label.csv
+data/WANDS/dataset/query.csv
