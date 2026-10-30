@@ -5,10 +5,13 @@ Usage:
     python src/search.py "moen mate blak hooks" --fuzzy
 """
 import argparse
+import os
 
 from elasticsearch import Elasticsearch
 
-ES_URL = "http://localhost:9200"
+# Overridable for containers: in docker-compose and Kubernetes, Elasticsearch
+# is not on localhost.
+ES_URL = os.environ.get("WANDS_ES_URL", "http://localhost:9200")
 ALIAS = "products_live"
 # Equal-score ties sort by product id. Without this, Elasticsearch returns tied
 # products in segment order, which varies between runs and index rebuilds

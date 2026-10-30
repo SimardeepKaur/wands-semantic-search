@@ -1,0 +1,9 @@
+# What the service image needs, nothing else (training and eval tools stay out).
+# Versions match requirements.txt.
+elasticsearch==8.15.1
+sentence-transformers==3.4.1
+torch==2.6.0
+fastapi==0.162.0
+uvicorn==0.54.0
+redis==8.1.0
+pandas==2.2.3
