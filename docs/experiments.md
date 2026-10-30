@@ -204,3 +204,34 @@ Bootstrap (`eval/compare.py`):
 - `hybrid_rrf60` vs `blend_w0.7`: every interval includes 0. A tie.
 
 **What it shows:** fusing keyword and vector results beats either alone, on every metric. RRF is at least as good as the best-tuned blend and needs no weight to tune: blending's result depends on w (0.3 is reliably worse), and the right w had to be found on the eval queries, which is exactly the kind of tuning that leaks. RRF with the paper's k = 60 matches it blind. The stack's choice stands. Latency: a hybrid query runs two top-100 searches; the p50 spread across the four runs (48 to 119 ms) is cache warm-up, not method cost.
+
+## Item 8: fine-tuning on the category tree (2026-10-29)
+
+Three runs, identical data and hyperparameters: LoRA rank 4, LoRA rank 16, full fine-tune. 30,000 product pairs sampled from the category tree (product.csv only), target similarity = shared path depth / deeper path depth, CosineSimilarityLoss, 1 epoch, batch 32, seed 0, 10% of products held out. Trained on a Colab T4 (the Mac killed the CPU run at 96%, see PROGRESS.md); all three times are on the same GPU, logged in MLflow and `results/perf.csv`. Pipeline details and two bugs the run surfaced (torchao version clash, adapter merge) are in PROGRESS.md.
+
+```
+run          strict  lenient  unlabelled   train eval_loss  size
+minilm_hnsw  0.3475  0.7758   0.1919       (no tuning)
+lora_r4      0.2738  0.6910   0.2867       6.8 min  0.0257  0.16 MB adapter
+lora_r16     0.1727  0.5479   0.4204       6.8 min  0.0154  0.6 MB adapter
+full_ft      0.1087  0.3542   0.6110       8.1 min  0.0035  91.9 MB model
+
+hybrid (RRF k=60 with bm25_rewrite):
+hybrid_rrf60    0.3688  0.8069  0.1598    (base MiniLM)
+lora_r4_hybrid  0.3477  0.7769  0.1935
+lora_r16_hybrid 0.3006  0.7175  0.2460
+full_ft_hybrid  0.2517  0.6090  0.3469
+```
+
+Every tuned run is reliably worse than its untuned counterpart on every metric (all intervals exclude 0; lora_r4 strict -0.0737, interval -0.0929 to -0.0554; full_ft strict -0.2388). The order is monotone: more capacity to learn the objective, worse retrieval. The training eval loss improves in exactly the same order (0.0257 -> 0.0154 -> 0.0035). The models learned the objective; the objective was wrong for the task.
+
+**The 20 queries that got worse most (lora_r4 vs minilm_hnsw) and the pattern.** The list: amarillo, hillsby oriental rug, delta trinsic, kisner, outdoor privacy wall, e12/candelabra, canadian, home sweet home sign, bistro table and chairs, bohemian, body pillow case, gold, welcome sign, industrial, leather dining chairs, canvas map art, camper, flamingo, ruckus chair, 30 inch bathroom vanity.
+
+The pattern: the category-tree objective teaches "same category = same vector", so the only signal that survives is which category a product sits in. Every query whose signal is NOT a category loses:
+- Brand and collection names (amarillo, hillsby, delta trinsic, kisner, ruckus): names do not follow the category tree, so their meaning is erased. For "delta trinsic" the base model's top 5 are all Trinsic-collection fixtures; lora_r4's top 5 are marble coasters.
+- Style and theme words that cut across categories (bohemian, industrial, gold, flamingo, camper, canadian): pulling same-category products together collapses the cross-category style axis.
+- Specs (e12/candelabra, 30 inch bathroom vanity): finer than the category level the objective rewards.
+
+Unlabelled share doubling to quadrupling is the same story seen from the label side: the tuned models mostly retrieve products no annotator ever saw for the query.
+
+**What it shows:** product-to-product similarity from a taxonomy is the wrong training signal for query-to-product retrieval. A useful fine-tune needs query-product pairs (which for WANDS would mean training on the eval labels, i.e. leakage, or collecting real click data). LoRA vs full fine-tuning: LoRA damaged less at equal epochs and its adapter is 575x smaller than the full model's delta, so if fine-tuning were worth doing, LoRA rank 4 is the form to do it in. Training time on one T4 was roughly equal (6.8 vs 8.1 min at this scale).

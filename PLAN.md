@@ -120,7 +120,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
 
 ### Phase E: fine-tuning (Elasticsearch stopped while training)
 
-- [ ] **8. LoRA**
+- [x] **8. LoRA** (done; every fine-tune lost to the untuned encoder, category-tree objective erases names/styles/specs; no fine-tuning deployed)
   - Do: `src/train_lora.py`. Training pairs are product pairs sampled from the category tree. The target similarity is the depth of the shared category path divided by the full depth. LoRA through `peft` on sentence-transformers, logged to MLflow (`mlruns/`). 10% of products held out for the training loss. Re-encode, re-index, eval.
   - Runs: `lora_r4`, `lora_r16`, `full_ft`. Each one vector-only and in hybrid.
   - Also measured: training time, adapter or model size on disk, both in MLflow and `results/perf.csv`.

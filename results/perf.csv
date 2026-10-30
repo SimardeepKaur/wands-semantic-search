@@ -11,3 +11,9 @@ date,experiment,metric,value,notes
 2026-10-29,query_latency,hybrid_rrf60_p99_ms,638.0,
 2026-10-29,query_latency,blend_w0.7_p50_ms,48.2,"same two searches, warm caches; the spread across hybrid runs is warm-up, not method"
 2026-10-29,query_latency,blend_w0.7_p99_ms,107.4,
+2026-10-29,finetune,lora_r4_train_minutes,6.8,"Colab T4, 30k pairs, 1 epoch, batch 32 (notebooks/02_finetune_colab.ipynb)"
+2026-10-29,finetune,lora_r16_train_minutes,6.8,
+2026-10-29,finetune,full_ft_train_minutes,8.1,
+2026-10-29,finetune,lora_r4_adapter_mb,0.16,
+2026-10-29,finetune,lora_r16_adapter_mb,0.6,
+2026-10-29,finetune,full_ft_saved_mb,91.9,"the whole model; the LoRA runs change only the adapter"
