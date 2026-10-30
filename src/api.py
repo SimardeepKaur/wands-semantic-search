@@ -58,17 +58,38 @@ async def lifespan(app):
     state["labels"] = (json.loads(LABELS_JSON.read_text())
                        if LABELS_JSON.exists() else {})
     state["cache"] = None
-    if os.environ.get("WANDS_CACHE", "on") != "off":
-        try:
-            from redis import Redis
-            cache = Redis(host=os.environ.get("REDIS_HOST", "localhost"),
-                          port=6379, socket_timeout=0.5)
-            cache.ping()
-            state["cache"] = cache
-        except Exception as exc:  # the service runs fine without a cache
-            log.warning("cache disabled, Redis not reachable: %s", exc)
+    state["cache_retry_at"] = 0.0
     yield
     state.clear()
+
+
+CACHE_RETRY_S = 30
+
+
+def _get_cache():
+    """Redis, connected lazily. In Kubernetes the cache can come up after the
+    API pods (its image may still be pulling), so a connection made once at
+    startup can silently never exist. A failed connection is retried at most
+    every CACHE_RETRY_S seconds; the service runs fine without a cache."""
+    if os.environ.get("WANDS_CACHE", "on") == "off":
+        return None
+    cache = state.get("cache")
+    if cache is not None:
+        return cache
+    now = time.monotonic()
+    if now < state.get("cache_retry_at", 0.0):
+        return None
+    state["cache_retry_at"] = now + CACHE_RETRY_S
+    try:
+        from redis import Redis
+        cache = Redis(host=os.environ.get("REDIS_HOST", "localhost"),
+                      port=6379, socket_timeout=0.5)
+        cache.ping()
+        state["cache"] = cache
+        return cache
+    except Exception as exc:
+        log.warning("cache disabled, Redis not reachable: %s", exc)
+        return None
 
 
 app = FastAPI(title="WANDS semantic search", lifespan=lifespan)
@@ -97,7 +118,7 @@ def search(q: str = Query(min_length=1), k: int = Query(10, ge=1, le=50),
 
     start = time.perf_counter()
     # cache first: normalised query, result count and filter form the key
-    cache, cached = state.get("cache"), None
+    cache, cached = _get_cache(), None
     cache_key = "search:" + hashlib.sha256(
         f"{q.strip().lower()}|{k}|{product_class or ''}".encode()).hexdigest()
     if cache is not None:

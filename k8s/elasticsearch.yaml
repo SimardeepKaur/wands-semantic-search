@@ -1,0 +1,60 @@
+# Elasticsearch inside the cluster: one pod, no persistence. The index is
+# rebuilt from stored vectors after deploy (src/rebuild_index.py through a
+# port-forward), the same way every other environment gets its index.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate   # never two ES pods fighting over the same cluster name
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+          env:
+            - name: discovery.type
+              value: single-node
+            - name: xpack.security.enabled
+              value: "false"
+            - name: ES_JAVA_OPTS
+              value: "-Xms1g -Xmx1g"
+          ports:
+            - containerPort: 9200
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/elasticsearch/data
+          readinessProbe:
+            httpGet:
+              path: /_cluster/health
+              port: 9200
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 24
+          resources:
+            requests:
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+spec:
+  selector:
+    app: elasticsearch
+  ports:
+    - port: 9200
+      targetPort: 9200

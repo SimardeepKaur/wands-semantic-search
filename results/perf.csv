@@ -39,3 +39,9 @@ date,experiment,metric,value,notes
 2026-10-29,finetune,lora_r4_eval_loss,0.0257,"held-out category-tree pairs; also in MLflow"
 2026-10-29,finetune,lora_r16_eval_loss,0.0154,
 2026-10-29,finetune,full_ft_eval_loss,0.0035,
+2026-10-30,k8s_loadtest,rate6_p50_ms,340,"kind, 3 replicas, 6 users 180s, cold cache, random WANDS mix; 3.9 req/s; 2 failures of 691. Cold misses pay encode + 3 ES queries on the shared 6 GB VM"
+2026-10-30,k8s_loadtest,rate6_p99_ms,17000,
+2026-10-30,k8s_loadtest,rate50_p50_ms,4,"50 users 180s, warm cache; 45.6 req/s; 0 failures of 8174; redis hit rate 0.942"
+2026-10-30,k8s_loadtest,rate50_p99_ms,1500,
+2026-10-30,k8s_kill,replicas1_failures,70,"API pod force-killed at t=45s of 150s under 6 users; 70 of 536 requests failed until the new pod passed readiness; p99 19000 ms"
+2026-10-30,k8s_kill,replicas3_failures,0,"same kill with 3 replicas; 0 of 836 failed; p99 3200 ms"

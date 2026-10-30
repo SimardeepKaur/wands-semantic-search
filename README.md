@@ -38,7 +38,7 @@ Winners were decided with a paired bootstrap over queries (10,000 resamples);
 a change only counts if its 95% interval excludes zero. Ties go to the simpler
 option.
 
-## Five results worth reading
+## Six results worth reading
 
 **1. Fine-tuning made search worse, in proportion to how well it trained.**
 The only training signal available without touching the eval labels was the
@@ -77,6 +77,13 @@ scratch and re-measures the deployed method on every PR. It passed its own PR
 at strict 0.3675 and failed a deliberately broken one at 0.3219
 ([the evidence PR](https://github.com/SimardeepKaur/wands-semantic-search/pull/16),
 kept closed).
+
+**6. One replica is an outage; three are a non-event.** On Kubernetes (kind),
+killing the only API pod under load failed 70 of 536 requests while the pod
+was rebuilt; killing one of three failed none of 836. The same cluster held
+45.6 req/s warm (p50 4 ms), and the experiment surfaced a real bug: the API
+connected to its cache once at startup, Redis came up 24 minutes later, and
+every pod silently ran cacheless until the connection became a lazy retry.
 
 ## Architecture
 
@@ -152,7 +159,7 @@ src/        search, patching, RRF, encoding, indexing, alias swap, API, logs
 eval/       scorer and logger, paired bootstrap, leakage check, CI gate
 loadtest/   Locust file and the rebuild/cache/zero-result experiments
 deploy/hf/  the one-container Space image and its assembly
-k8s/        Kubernetes manifests for kind (build item 15)
+k8s/        Kubernetes manifests, run locally on kind
 results/    runs.csv (every eval), perf.csv (every measurement), load CSVs
 docs/       problem statement, raw experiment outputs
 ```

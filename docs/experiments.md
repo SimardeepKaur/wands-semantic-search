@@ -310,3 +310,47 @@ The CI workflow rebuilds the stack from nothing on every PR (Elasticsearch servi
 
 - Green: PR 15, the gate's own PR. Runner measured strict 0.3675 against floor 0.3638. Passed.
 - Red: PR 16 deliberately dropped the vector leg from RRF. Runner measured strict 0.3219. Failed, as it must. Closed unmerged as evidence: https://github.com/SimardeepKaur/wands-semantic-search/pull/16
+
+## Item 15: Kubernetes on kind, and the kill-a-replica experiment (2026-10-30)
+
+Cluster: one kind node inside Docker Desktop's 6 GB VM. `k8s/` holds the
+manifests: Elasticsearch (1 pod, 1 GB heap, no persistence), Redis (64 MB,
+LRU), and the API (item-13 image, 3 replicas, readiness probe on `/health`,
+`imagePullPolicy: Never` because the image is loaded with `kind load`). The
+API Service is a NodePort mapped to localhost:8080 by `k8s/kind-config.yaml`.
+The index is built the same way as everywhere else: `src/rebuild_index.py`
+through a port-forward, from the stored vectors.
+
+Two configuration bugs surfaced before the numbers were trustworthy, both now
+fixed. First, the ES manifest had copied `node.store.allow_mmap: false` from
+the Space image; without mmap, single searches ran in hundreds of ms to
+seconds. Second, the API connected to Redis once at startup; Redis's image
+pull finished 24 minutes after the API pods started, so all three pods ran
+cacheless (0 keyspace hits and 0 misses after 1,300 requests). The cache
+connection in `src/api.py` is now lazy, retried at most every 30 s.
+
+Load (Locust, random WANDS-query mix, `results/load/k8s_*`):
+
+| Scenario | req/s | p50 | p99 | failures |
+|---|---|---|---|---|
+| 6 users, cold cache | 3.9 | 340 ms | 17 s | 2 / 691 |
+| 50 users, warm cache | 45.6 | 4 ms | 1.5 s | 0 / 8174 (hit rate 0.942) |
+
+Warm, the cluster matches the Docker Compose numbers from item 11. Cold is
+roughly 15x slower than the host runs from item 12 (p50 340 ms vs 20 ms):
+every miss pays query encoding plus three Elasticsearch searches, and here
+the API replicas, Elasticsearch, Redis and Kubernetes itself share one 6 GB,
+8-vCPU VM, so cold work queues where the host run had idle cores.
+
+The experiment: `kubectl delete pod --grace-period=0 --force` on one API pod
+at t=45 s of a 150 s, 6-user run.
+
+| Replicas | failed requests | p99 |
+|---|---|---|
+| 1 | 70 of 536 | 19 s |
+| 3 | 0 of 836 | 3.2 s |
+
+With one replica the Service has no ready endpoint until the replacement pod
+starts, loads the encoder and passes its readiness probe; every request in
+that window fails. With three, the Service stops routing to the dead pod and
+the two survivors absorb the load with no visible failures.

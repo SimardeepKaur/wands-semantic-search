@@ -103,3 +103,9 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Rejected:** Manual eval before merging (nothing enforces it). A zero-tolerance gate (HNSW rebuild noise and CPU float differences would make it flaky; measured wobble is under 0.002, a real regression costs 0.02 or more).
 - **Evidence:** Green on its own PR (runner strict 0.3675, floor 0.3638). Red on the deliberate regression, runner strict 0.3219: https://github.com/SimardeepKaur/wands-semantic-search/pull/16, closed unmerged.
 - **Why (in my words):**
+
+### Replica count
+- **Chosen:** 3 API replicas behind one Service (`k8s/api.yaml`), each gated by a readiness probe on `/health`.
+- **Rejected:** 1 replica.
+- **Evidence:** Kill-a-pod experiment on kind under 6 users of load (`perf.csv`, `k8s_kill`): with 1 replica, 70 of 536 requests failed while Kubernetes rebuilt the pod and waited for it to load the model and pass readiness; with 3 replicas, the same kill failed 0 of 836.
+- **Why (in my words):**
