@@ -17,3 +17,7 @@ date,experiment,metric,value,notes
 2026-10-29,finetune,lora_r4_adapter_mb,0.16,
 2026-10-29,finetune,lora_r16_adapter_mb,0.6,
 2026-10-29,finetune,full_ft_saved_mb,91.9,"the whole model; the LoRA runs change only the adapter"
+2026-10-30,rebuild_under_load,inplace_requests,1634,"Locust 6 req/s for 300s against /search"
+2026-10-30,rebuild_under_load,inplace_failures,30,"12 http 500 (index deleted), 18 responses with 0 results (index empty); index incomplete for 139s"
+2026-10-30,rebuild_under_load,swap_requests,1647,
+2026-10-30,rebuild_under_load,swap_failures,0,"src/rebuild_index.py atomic alias move"

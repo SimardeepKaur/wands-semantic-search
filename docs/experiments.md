@@ -235,3 +235,19 @@ The pattern: the category-tree objective teaches "same category = same vector", 
 Unlabelled share doubling to quadrupling is the same story seen from the label side: the tuned models mostly retrieve products no annotator ever saw for the query.
 
 **What it shows:** product-to-product similarity from a taxonomy is the wrong training signal for query-to-product retrieval. A useful fine-tune needs query-product pairs (which for WANDS would mean training on the eval labels, i.e. leakage, or collecting real click data). LoRA vs full fine-tuning: LoRA damaged less at equal epochs and its adapter is 575x smaller than the full model's delta, so if fine-tuning were worth doing, LoRA rank 4 is the form to do it in. Training time on one T4 was roughly equal (6.8 vs 8.1 min at this scale).
+
+## Item 10: rebuilding the live index under load (2026-10-30)
+
+Both scenarios rebuilt the full 42,994-product index from stored vectors while Locust drove /search at 6 requests per second for 300 s (hand-written queries, `loadtest/locustfile.py`; a request fails on non-200 or fewer than 10 results).
+
+```
+scenario                         requests  failures
+in place (delete + recreate)     1634      30   (12 x http 500, 18 x empty results)
+alias swap (rebuild_index.py)    1647      0
+```
+
+In place (`loadtest/rebuild_inplace.py`): deleting the index killed searches outright (500s) for a few seconds; once the empty index existed under the same name, searches "worked" again but returned nothing, then partial catalogues. The index was incomplete for 139 s; only the first ~10 s of that showed up as counted failures. The silent window is the worse half: responses look healthy and are quietly missing most of the catalogue.
+
+Alias swap (`src/rebuild_index.py`): the new dated index is built and count-checked off to the side, then `products_live` moves in one atomic aliases call. Every request hit a complete index; zero failures; the old index stays as an instant rollback target.
+
+**What it shows:** never rebuild the index clients are reading. Build beside, verify, swap atomically.
