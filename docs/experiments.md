@@ -265,3 +265,15 @@ cache on    43.9 req/s     6 ms     6500 ms  0.936 (7379 hits / 503 misses)
 Cache off: the service cannot do 50 searches per second on one CPU worker (each request encodes the query and runs two searches), so requests queue and the measured rate stalls at half the demand with a 16-second p99. Cache on: 94% of requests come straight from Redis in a few milliseconds; the p99 tail is the first pass over the 480 queries while the cache warms. Same hardware, same queries.
 
 **What it shows:** the expensive part of a semantic search request is per-query compute (encoding), and it is identical for identical queries, which real traffic repeats constantly. A small LRU cache (64 MB) turns the repeat traffic into O(1) lookups.
+
+## Item 12: canonical load test (2026-10-30)
+
+The deployed configuration (hybrid search, Redis cache on), random WANDS-query mix, 180 s per rate, one uvicorn worker.
+
+```
+rate                requests  failures  p50    p99
+6 req/s (cold cache)  1080     0        20 ms  660 ms
+50 req/s (warm cache) 8800     0        12 ms  160 ms
+```
+
+The 6 req/s run starts from an empty cache, so its p99 carries the first pass of cache misses (a full uncached request is ~300-900 ms, see item 11). At 50 req/s with the cache warm the service is comfortable; the uncached ceiling of ~24 req/s from item 11 is the number to remember when the cache cannot help (all-new queries).

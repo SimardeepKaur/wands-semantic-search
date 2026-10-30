@@ -143,7 +143,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
   - Experiment: 50 queries per second, cache off vs on, p50 and p99. Queries drawn at random from the 480 WANDS queries (this mix is written down, since it sets the hit rate).
   - Done when: numbers and hit rate in `results/perf.csv`, `DECISIONS.md` "Cache" entry.
 
-- [ ] **12. Load test**
+- [x] **12. Load test** (done; 6 qps: p50 20ms p99 660ms, 50 qps: p50 12ms p99 160ms, 0 failures)
   - Do: `loadtest/locustfile.py`. Runs at 6 and 50 queries per second, fixed duration.
   - Done when: p50, p99 and failure count for both rates in `results/perf.csv`.
 
