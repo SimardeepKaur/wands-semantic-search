@@ -129,7 +129,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
 
 ### Phase F: service (Elasticsearch, Redis, API)
 
-- [ ] **9. Service**
+- [x] **9. Service** (done; smoke+consistency tests pass, API matches run hybrid_rrf60_det exactly, demo page checked in the browser)
   - Do: `src/api.py` (FastAPI). Encode the query on CPU with the chosen model, run the chosen hybrid on `products_live`, optional product-class filter, return 10. Demo page at `/`: BM25 next to hybrid, and for WANDS queries each result marked Exact, Partial or unlabelled. JSON request logs from the start (query, latency, result count, cache hit).
   - Done when: a smoke test passes for `/`, `/search` and `/health`. For 20 WANDS queries the API returns the same product IDs as the eval run of the same method.
 
