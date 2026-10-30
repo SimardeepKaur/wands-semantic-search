@@ -152,7 +152,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
   - Experiment: `python:3.11` vs `python:3.11-slim`, image size.
   - Done when: both sizes in `results/perf.csv`, the chosen image passes the item 9 smoke test, `DECISIONS.md` "Base image" entry.
 
-- [ ] **16. Monitoring** (done here, since the logs start in item 9)
+- [x] **16. Monitoring** (done; zero-result rate bm25 0.0021 vs hybrid 0.0, summary script and committed log)
   - Do: `src/log_summary.py`: zero-result rate, p50, p99, 10 slowest queries.
   - Experiment: zero-result rate for BM25 only vs hybrid on the same query set.
   - Done when: summary output saved in `docs/experiments.md`, both rates in `results/perf.csv`.
