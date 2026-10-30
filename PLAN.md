@@ -159,7 +159,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
 
 ### Phase G: ship
 
-- [ ] **14. CI**
+- [x] **14. CI** (done; gate green on PR 15 at 0.3675, red on the deliberate regression PR 16 at 0.3219, closed unmerged)
   - Do: put the chosen product vectors in a GitHub release. `.github/workflows/eval.yml`: start Elasticsearch, download the vectors, encode the 480 queries on CPU, run the eval, fail if strict P@10 is below the current best for that method in `runs.csv`. Also runs the leakage grep.
   - Experiment: a PR with a deliberately worse model. The check must go red. Close the PR without merging.
   - Done when: the check is green on `main`, red on the evidence PR, and the PR link is in `DECISIONS.md` "Eval gate".
