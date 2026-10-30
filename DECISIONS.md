@@ -67,3 +67,15 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Rejected:** Weighted score blending (min-max, vector weight 0.3 / 0.5 / 0.7). The best blend ties RRF on strict (0.3644, interval includes 0) and loses on lenient and unlabelled at w = 0.5; w = 0.3 is reliably worse. Blending also needs its weight tuned per corpus, and tuning it on the eval queries would leak. Vector-only and keyword-only both reliably worse than the hybrid.
 - **Evidence:** runs `hybrid_rrf60`, `blend_w0.3`, `blend_w0.5`, `blend_w0.7` in `results/runs.csv`; bootstrap tables in `docs/experiments.md` item 7.
 - **Why (in my words):**
+
+### Fine-tuning method
+- **Chosen:** No fine-tuning. The deployed encoder stays the off-the-shelf `all-MiniLM-L6-v2`. The stack's LoRA-via-peft pipeline was built and measured (`src/train_lora.py`, `notebooks/02_finetune_colab.ipynb`, MLflow runs in `mlruns/`), and every tuned model lost to the untuned one.
+- **Rejected:** LoRA r4 (strict P@10 0.2738 vs 0.3475, -0.0737, interval -0.0929 to -0.0554). LoRA r16 (0.1727). Full fine-tuning (0.1087, and 91.9 MB saved vs a 0.16 MB adapter). The category-tree objective (the only training signal available without touching the eval labels) teaches category membership and erases brand names, cross-category styles and specs; see `docs/experiments.md` item 8 for the worst-20 pattern.
+- **Evidence:** runs `lora_r4`, `lora_r16`, `full_ft` and their `_hybrid` counterparts vs `minilm_hnsw` and `hybrid_rrf60` in `results/runs.csv`; bootstrap tables and the delta trinsic example in `docs/experiments.md` item 8.
+- **Why (in my words):**
+
+### LoRA rank (conditional: if fine-tuning were used)
+- **Chosen:** Rank 4. Both ranks hurt here, but r4 hurt reliably less than r16 (strict 0.2738 vs 0.1727, difference -0.1010, interval -0.1200 to -0.0827) and its adapter is a quarter the size (0.16 vs 0.6 MB). Training time identical (6.8 min on a T4).
+- **Rejected:** Rank 16 (more capacity to learn the wrong objective, worse on every metric). Full fine-tuning (worst scores, 575x the artifact size).
+- **Evidence:** runs `lora_r4` vs `lora_r16` in `results/runs.csv`; `results/perf.csv` finetune rows; MLflow.
+- **Why (in my words):**

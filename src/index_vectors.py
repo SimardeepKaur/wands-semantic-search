@@ -22,7 +22,8 @@ from search import ES_URL
 
 PRODUCTS_CSV = "data/WANDS/dataset/product.csv"
 DIMS = {"mpnet": 768, "minilm": 384,
-        "pool_mean": 384, "pool_max": 384, "pool_top3": 384}
+        "pool_mean": 384, "pool_max": 384, "pool_top3": 384,
+        "lora_r4": 384, "lora_r16": 384, "full_ft": 384}
 
 
 def main():
