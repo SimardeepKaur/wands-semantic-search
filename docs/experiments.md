@@ -303,3 +303,10 @@ slowest queries (worst case per query):
 ```
 
 Zero-result rates on the same 480 queries: plain BM25 0.0021 (one query, "minnestrista", a misspelled collection name no keyword matches), hybrid 0.0000 (the vector leg always returns the nearest neighbours, so the hybrid never comes back empty). The slowest-queries list is dominated by the first requests after startup (model and resource warm-up), which is itself worth knowing from logs.
+
+## Item 14: the eval gate, green and red (2026-10-30)
+
+The CI workflow rebuilds the stack from nothing on every PR (Elasticsearch service container, stored vectors from the data-v1 release, public WANDS clone, fresh index) and re-measures the serving method on all 480 queries. Gate: fail if strict P@10 lands more than 0.005 below the best logged run (the tolerance covers HNSW rebuild noise and cross-machine float differences; a real regression costs 0.02+).
+
+- Green: PR 15, the gate's own PR. Runner measured strict 0.3675 against floor 0.3638. Passed.
+- Red: PR 16 deliberately dropped the vector leg from RRF. Runner measured strict 0.3219. Failed, as it must. Closed unmerged as evidence: https://github.com/SimardeepKaur/wands-semantic-search/pull/16

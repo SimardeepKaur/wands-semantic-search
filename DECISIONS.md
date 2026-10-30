@@ -97,3 +97,9 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Rejected:** `python:3.11` (3.42 GB, no benefit here). Alpine was not tried: PyTorch does not ship musl wheels, so it would mean compiling.
 - **Evidence:** `results/perf.csv` docker_image rows; the slim container passes the /health, /, /search, filter and cache checks against live Elasticsearch and Redis.
 - **Why (in my words):**
+
+### Eval gate
+- **Chosen:** A GitHub Actions gate on every PR and push to main: rebuild the index from released vectors, re-measure the serving method on all 480 queries, fail below best-logged strict P@10 minus 0.005 (tolerance documented in `eval/ci_gate.py`).
+- **Rejected:** Manual eval before merging (nothing enforces it). A zero-tolerance gate (HNSW rebuild noise and CPU float differences would make it flaky; measured wobble is under 0.002, a real regression costs 0.02 or more).
+- **Evidence:** Green on its own PR (runner strict 0.3675, floor 0.3638). Red on the deliberate regression, runner strict 0.3219: https://github.com/SimardeepKaur/wands-semantic-search/pull/16, closed unmerged.
+- **Why (in my words):**
