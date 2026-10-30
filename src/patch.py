@@ -120,7 +120,8 @@ def bm25_patched(es, query, k=10, synonyms=True, spell=True, rewrite=True, resou
     bool_q = {"must": [must], "should": should}
     if es_filter:
         bool_q["filter"] = [es_filter]
-    resp = es.search(index="products_live", size=k,
+    from search import TIEBREAK_SORT
+    resp = es.search(index="products_live", size=k, sort=TIEBREAK_SORT,
                      query={"bool": bool_q},
                      source=["product_id", "product_name", "product_class"])
     return [

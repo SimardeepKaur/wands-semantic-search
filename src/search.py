@@ -10,6 +10,10 @@ from elasticsearch import Elasticsearch
 
 ES_URL = "http://localhost:9200"
 ALIAS = "products_live"
+# Equal-score ties sort by product id. Without this, Elasticsearch returns tied
+# products in segment order, which varies between runs and index rebuilds
+# (PROGRESS.md 2026-10-30), so no two eval runs matched exactly.
+TIEBREAK_SORT = [{"_score": {"order": "desc"}}, {"product_id": {"order": "asc"}}]
 FIELDS = ["product_name", "product_description", "product_features"]
 SOURCE_FIELDS = ["product_id", "product_name", "product_class"]
 
@@ -29,13 +33,14 @@ def vector_knn(es, index, query_vector, k=10, num_candidates=100, es_filter=None
            "k": k, "num_candidates": num_candidates}
     if es_filter:
         knn["filter"] = es_filter
-    resp = es.search(index=index, knn=knn, size=k, source=SOURCE_FIELDS)
+    resp = es.search(index=index, knn=knn, size=k, source=SOURCE_FIELDS,
+                     sort=TIEBREAK_SORT)
     return _hits(resp)
 
 
 def vector_exact(es, index, query_vector, k=10):
     """Exact search: score every product with cosine similarity. Slow by design."""
-    resp = es.search(index=index, size=k, query={
+    resp = es.search(index=index, size=k, sort=TIEBREAK_SORT, query={
         "script_score": {
             "query": {"match_all": {}},
             "script": {"source": "cosineSimilarity(params.v, 'vector') + 1.0",
@@ -63,6 +68,7 @@ def bm25(es, query, k=10, fuzzy=False, es_filter=None):
         size=k,
         query=query_body,
         source=SOURCE_FIELDS,
+        sort=TIEBREAK_SORT,
     )
     return _hits(resp)
 

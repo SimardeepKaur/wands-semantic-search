@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from api import app  # noqa: E402
 
-PER_QUERY = ROOT / "results/per_query/hybrid_rrf60_served.csv"
+PER_QUERY = ROOT / "results/per_query/hybrid_rrf60_det.csv"
 
 
 def main():
@@ -59,7 +59,7 @@ def main():
                 mismatches.append((row["query"], want, got))
         assert not mismatches, f"{len(mismatches)} queries differ from the eval run: " \
                                f"{mismatches[0][0]!r}"
-        print("consistency ok: 20 queries match run hybrid_rrf60_served exactly")
+        print("consistency ok: 20 queries match run hybrid_rrf60_det exactly")
 
 
 if __name__ == "__main__":
