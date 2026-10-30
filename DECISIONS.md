@@ -85,3 +85,9 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Rejected:** Rebuilding in place under one name. Under 6 requests/s it produced 30 failed or empty responses and left the index incomplete for 139 seconds, most of that invisible to error counts (responses looked fine while missing most of the catalogue). The alias swap produced 0 failures on the same load.
 - **Evidence:** `results/perf.csv` rebuild_under_load rows; Locust CSVs in `results/loadtest/`; `docs/experiments.md` item 10.
 - **Why (in my words):**
+
+### Cache
+- **Chosen:** Redis (64 MB, least-recently-used eviction), checked before searching. Key: normalised query, result count, filter. 10-minute expiry. The service runs without it if Redis is down.
+- **Rejected:** No cache (saturates at 23.9 of 50 requested searches per second, p50 1200 ms, p99 16000 ms on this machine). In-process cache (dies with each replica and cannot be shared between the 3 Kubernetes replicas of item 15).
+- **Evidence:** `results/perf.csv` cache_50qps rows; Locust CSVs `results/loadtest/cache_off_*`, `cache_on_*`; hit rate 0.936 from Redis keyspace stats; `docs/experiments.md` item 11.
+- **Why (in my words):**

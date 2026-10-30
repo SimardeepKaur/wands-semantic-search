@@ -251,3 +251,17 @@ In place (`loadtest/rebuild_inplace.py`): deleting the index killed searches out
 Alias swap (`src/rebuild_index.py`): the new dated index is built and count-checked off to the side, then `products_live` moves in one atomic aliases call. Every request hit a complete index; zero failures; the old index stays as an instant rollback target.
 
 **What it shows:** never rebuild the index clients are reading. Build beside, verify, swap atomically.
+
+## Item 11: cache off vs on at 50 requests per second (2026-10-30)
+
+Load: 50 Locust users, each drawing a random query from the 480 WANDS queries (eval-side export; the mix sets the hit rate), 180 s per scenario, one uvicorn worker.
+
+```
+scenario    achieved rate  p50      p99      hit rate
+cache off   23.9 req/s     1200 ms  16000 ms -
+cache on    43.9 req/s     6 ms     6500 ms  0.936 (7379 hits / 503 misses)
+```
+
+Cache off: the service cannot do 50 searches per second on one CPU worker (each request encodes the query and runs two searches), so requests queue and the measured rate stalls at half the demand with a 16-second p99. Cache on: 94% of requests come straight from Redis in a few milliseconds; the p99 tail is the first pass over the 480 queries while the cache warms. Same hardware, same queries.
+
+**What it shows:** the expensive part of a semantic search request is per-query compute (encoding), and it is identical for identical queries, which real traffic repeats constantly. A small LRU cache (64 MB) turns the repeat traffic into O(1) lookups.
