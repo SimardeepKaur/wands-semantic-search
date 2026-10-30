@@ -94,8 +94,13 @@ def correct(es, res, query_words):
     return out
 
 
-def bm25_patched(es, query, k=10, synonyms=True, spell=True, rewrite=True, resources=None):
-    """Top k product dicts for a query, with the chosen patches applied."""
+def bm25_patched(es, query, k=10, synonyms=True, spell=True, rewrite=True, resources=None,
+                 es_filter=None):
+    """Top k product dicts for a query, with the chosen patches applied.
+
+    es_filter: optional Elasticsearch filter clause (scores unchanged), for
+    example {"term": {"product_class.raw": "Sofas"}}.
+    """
     res = resources or build_resources()
     qw = words(query)
     if spell:
@@ -112,8 +117,12 @@ def bm25_patched(es, query, k=10, synonyms=True, spell=True, rewrite=True, resou
         classes = list(dict.fromkeys(res["boosts"][w] for w in qw if w in res["boosts"]))[:2]
         for c in classes:
             should.append({"match": {"product_class": {"query": c, "boost": 1.0}}})
-    resp = es.search(index="products_live", size=k,
-                     query={"bool": {"must": [must], "should": should}},
+    bool_q = {"must": [must], "should": should}
+    if es_filter:
+        bool_q["filter"] = [es_filter]
+    from search import TIEBREAK_SORT
+    resp = es.search(index="products_live", size=k, sort=TIEBREAK_SORT,
+                     query={"bool": bool_q},
                      source=["product_id", "product_name", "product_class"])
     return [
         {"product_id": int(h["_id"]), "score": h["_score"],

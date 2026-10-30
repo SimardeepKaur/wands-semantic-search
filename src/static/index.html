@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WANDS Search</title>
+<style>
+  :root { --bg:#fff; --fg:#1c1c1c; --muted:#6a6a6a; --line:#e3e3e3;
+          --exact:#1a7f37; --partial:#9a6700; --irrelevant:#b42318; --none:#6a6a6a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:15px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width:1100px; margin:0 auto; padding:24px 16px 60px; }
+  h1 { font-size:20px; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:13px; margin-bottom:18px; }
+  form { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+  input[type=text] { flex:2 1 260px; padding:9px 12px; font-size:15px;
+    border:1px solid var(--line); border-radius:8px; }
+  input#cls { flex:1 1 160px; }
+  button { padding:9px 16px; font-size:15px; border:0; border-radius:8px;
+    background:#1c1c1c; color:#fff; cursor:pointer; }
+  .meta { color:var(--muted); font-size:13px; min-height:18px; margin-bottom:14px; }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:760px){ .cols { grid-template-columns:1fr; } }
+  .col h2 { font-size:14px; margin:0 0 8px; color:var(--muted);
+            text-transform:uppercase; letter-spacing:.04em; }
+  ol { margin:0; padding:0; list-style:none; counter-reset:r; }
+  li { border-top:1px solid var(--line); padding:8px 2px; display:flex; gap:10px; }
+  li::before { counter-increment:r; content:counter(r); color:var(--muted);
+               min-width:1.4em; font-variant-numeric:tabular-nums; }
+  .name { flex:1; }
+  .cls { color:var(--muted); font-size:12.5px; }
+  .badge { font-size:11.5px; border-radius:20px; padding:2px 9px; height:fit-content;
+           white-space:nowrap; border:1px solid currentColor; }
+  .Exact { color:var(--exact); } .Partial { color:var(--partial); }
+  .Irrelevant { color:var(--irrelevant); } .unlabelled { color:var(--none); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>WANDS semantic search</h1>
+  <div class="sub">Plain keyword search next to the measured best hybrid
+    (BM25 + MiniLM vectors fused with RRF). Type one of the 480 WANDS queries
+    to see relevance labels.</div>
+  <form id="f">
+    <input type="text" id="q" placeholder="e.g. smart coffee table" autofocus>
+    <input type="text" id="cls" placeholder="class filter (optional, exact)">
+    <button>Search</button>
+  </form>
+  <div class="meta" id="meta"></div>
+  <div class="cols">
+    <div class="col"><h2>BM25 (keyword floor)</h2><ol id="bm25"></ol></div>
+    <div class="col"><h2>Hybrid (deployed)</h2><ol id="hybrid"></ol></div>
+  </div>
+</div>
+<script>
+const f = document.getElementById("f"), meta = document.getElementById("meta");
+function row(h, labelsKnown) {
+  const li = document.createElement("li");
+  const name = document.createElement("div"); name.className = "name";
+  name.textContent = h.product_name;
+  const cls = document.createElement("div"); cls.className = "cls";
+  cls.textContent = h.product_class || "";
+  name.appendChild(cls);
+  li.appendChild(name);
+  if (labelsKnown) {
+    const b = document.createElement("span");
+    const label = h.label || "unlabelled";
+    b.className = "badge " + label; b.textContent = label;
+    li.appendChild(b);
+  }
+  return li;
+}
+f.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const q = document.getElementById("q").value.trim();
+  if (!q) return;
+  meta.textContent = "Searching…";
+  const cls = document.getElementById("cls").value.trim();
+  const url = "/search?q=" + encodeURIComponent(q) +
+              (cls ? "&product_class=" + encodeURIComponent(cls) : "");
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    meta.textContent = d.took_ms + " ms" +
+      (d.labels_known ? " · WANDS query, labels shown" : " · not a WANDS query, no labels");
+    for (const side of ["bm25", "hybrid"]) {
+      const ol = document.getElementById(side);
+      ol.replaceChildren(...d[side].map(h => row(h, d.labels_known)));
+    }
+  } catch (err) { meta.textContent = "Search failed: " + err.message; }
+});
+</script>
+</body>
+</html>

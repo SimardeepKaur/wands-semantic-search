@@ -10,6 +10,10 @@ from elasticsearch import Elasticsearch
 
 ES_URL = "http://localhost:9200"
 ALIAS = "products_live"
+# Equal-score ties sort by product id. Without this, Elasticsearch returns tied
+# products in segment order, which varies between runs and index rebuilds
+# (PROGRESS.md 2026-10-30), so no two eval runs matched exactly.
+TIEBREAK_SORT = [{"_score": {"order": "desc"}}, {"product_id": {"order": "asc"}}]
 FIELDS = ["product_name", "product_description", "product_features"]
 SOURCE_FIELDS = ["product_id", "product_name", "product_class"]
 
@@ -23,18 +27,20 @@ def _hits(resp):
     ]
 
 
-def vector_knn(es, index, query_vector, k=10, num_candidates=100):
+def vector_knn(es, index, query_vector, k=10, num_candidates=100, es_filter=None):
     """Approximate nearest neighbours through the HNSW graph."""
-    resp = es.search(index=index, knn={
-        "field": "vector", "query_vector": query_vector,
-        "k": k, "num_candidates": num_candidates,
-    }, size=k, source=SOURCE_FIELDS)
+    knn = {"field": "vector", "query_vector": query_vector,
+           "k": k, "num_candidates": num_candidates}
+    if es_filter:
+        knn["filter"] = es_filter
+    resp = es.search(index=index, knn=knn, size=k, source=SOURCE_FIELDS,
+                     sort=TIEBREAK_SORT)
     return _hits(resp)
 
 
 def vector_exact(es, index, query_vector, k=10):
     """Exact search: score every product with cosine similarity. Slow by design."""
-    resp = es.search(index=index, size=k, query={
+    resp = es.search(index=index, size=k, sort=TIEBREAK_SORT, query={
         "script_score": {
             "query": {"match_all": {}},
             "script": {"source": "cosineSimilarity(params.v, 'vector') + 1.0",
@@ -44,7 +50,7 @@ def vector_exact(es, index, query_vector, k=10):
     return _hits(resp)
 
 
-def bm25(es, query, k=10, fuzzy=False):
+def bm25(es, query, k=10, fuzzy=False, es_filter=None):
     """Top k products for a query, as a list of dicts, best first.
 
     multi_match runs the query against each field and keeps the best field's BM25 score
@@ -54,11 +60,15 @@ def bm25(es, query, k=10, fuzzy=False):
     if fuzzy:
         # AUTO: words of 1-2 chars must match exactly, 3-5 chars allow 1 edit, 6+ allow 2.
         match["fuzziness"] = "AUTO"
+    query_body = {"multi_match": match}
+    if es_filter:
+        query_body = {"bool": {"must": [query_body], "filter": [es_filter]}}
     resp = es.search(
         index=ALIAS,
         size=k,
-        query={"multi_match": match},
+        query=query_body,
         source=SOURCE_FIELDS,
+        sort=TIEBREAK_SORT,
     )
     return _hits(resp)
 

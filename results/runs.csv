@@ -28,3 +28,5 @@ lora_r16,2026-10-29,55b9c59,lora_r16,0.1727,0.5479,0.4204,"item 8: fine-tuned Mi
 lora_r16_hybrid,2026-10-29,55b9c59,lora_r16_hybrid,0.3006,0.7175,0.246,"item 8: RRF k=60, bm25_rewrite top100 + lora_r16 top100"
 full_ft,2026-10-29,55b9c59,full_ft,0.1087,0.3542,0.611,"item 8: fine-tuned MiniLM (Colab T4), vector only, HNSW"
 full_ft_hybrid,2026-10-29,55b9c59,full_ft_hybrid,0.2517,0.609,0.3469,"item 8: RRF k=60, bm25_rewrite top100 + full_ft top100"
+hybrid_rrf60_served,2026-10-30,8d422d2,hybrid_rrf60,0.3688,0.8062,0.1596,item 9: same method re-run against the serving alias (minilm index) after the swap; differs from hybrid_rrf60 only by equal-score tie order deep in the legs
+hybrid_rrf60_det,2026-10-30,428badb,hybrid_rrf60,0.3677,0.8065,0.16,"item 9: hybrid with deterministic tie-break (score then product id), the canonical serving ranking; replaces hybrid_rrf60_served as the test target"
