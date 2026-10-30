@@ -21,3 +21,8 @@ date,experiment,metric,value,notes
 2026-10-30,rebuild_under_load,inplace_failures,30,"12 http 500 (index deleted), 18 responses with 0 results (index empty); index incomplete for 139s"
 2026-10-30,rebuild_under_load,swap_requests,1647,
 2026-10-30,rebuild_under_load,swap_failures,0,"src/rebuild_index.py atomic alias move"
+2026-10-30,cache_50qps,off_p50_ms,1200,"Locust 50 users, random WANDS-query mix, 180s; service saturated at 23.9 req/s"
+2026-10-30,cache_50qps,off_p99_ms,16000,
+2026-10-30,cache_50qps,on_p50_ms,6,"43.9 req/s sustained"
+2026-10-30,cache_50qps,on_p99_ms,6500,"tail is the cold warm-up misses"
+2026-10-30,cache_50qps,hit_rate,0.936,"redis keyspace stats: 7379 hits, 503 misses; 480 distinct queries"

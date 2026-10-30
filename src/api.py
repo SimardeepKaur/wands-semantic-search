@@ -17,8 +17,10 @@ latency in ms, result count, cache_hit (always false until the Redis item).
 Run:
     .venv/bin/uvicorn api:app --app-dir src --port 8000
 """
+import hashlib
 import json
 import logging
+import os
 import sys
 import time
 from contextlib import asynccontextmanager
@@ -55,6 +57,16 @@ async def lifespan(app):
     state["resources"] = build_resources()
     state["labels"] = (json.loads(LABELS_JSON.read_text())
                        if LABELS_JSON.exists() else {})
+    state["cache"] = None
+    if os.environ.get("WANDS_CACHE", "on") != "off":
+        try:
+            from redis import Redis
+            cache = Redis(host=os.environ.get("REDIS_HOST", "localhost"),
+                          port=6379, socket_timeout=0.5)
+            cache.ping()
+            state["cache"] = cache
+        except Exception as exc:  # the service runs fine without a cache
+            log.warning("cache disabled, Redis not reachable: %s", exc)
     yield
     state.clear()
 
@@ -84,6 +96,25 @@ def search(q: str = Query(min_length=1), k: int = Query(10, ge=1, le=50),
     from search import ALIAS, bm25, vector_knn
 
     start = time.perf_counter()
+    # cache first: normalised query, result count and filter form the key
+    cache, cached = state.get("cache"), None
+    cache_key = "search:" + hashlib.sha256(
+        f"{q.strip().lower()}|{k}|{product_class or ''}".encode()).hexdigest()
+    if cache is not None:
+        try:
+            cached = cache.get(cache_key)
+        except Exception:
+            cached = None
+    if cached is not None:
+        body = json.loads(cached)
+        took_ms = round((time.perf_counter() - start) * 1000, 1)
+        log.info(json.dumps({
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%S"), "query": q, "k": k,
+            "class_filter": product_class, "latency_ms": took_ms,
+            "n_results": len(body["hybrid"]), "cache_hit": True,
+        }))
+        return dict(body, took_ms=took_ms, cache_hit=True)
+
     es_filter = ({"term": {"product_class.raw": product_class}}
                  if product_class else None)
 
@@ -101,15 +132,20 @@ def search(q: str = Query(min_length=1), k: int = Query(10, ge=1, le=50),
     hybrid = [by_id[pid] for pid in fused]
 
     label_map = state["labels"].get(q.strip().lower(), {})
+    body = {"query": q, "k": k, "labels_known": bool(label_map),
+            "bm25": _mark(plain, label_map), "hybrid": _mark(hybrid, label_map)}
+    if cache is not None:
+        try:
+            cache.setex(cache_key, 600, json.dumps(body))
+        except Exception:
+            pass
     took_ms = round((time.perf_counter() - start) * 1000, 1)
     log.info(json.dumps({
         "ts": time.strftime("%Y-%m-%dT%H:%M:%S"), "query": q, "k": k,
         "class_filter": product_class, "latency_ms": took_ms,
         "n_results": len(hybrid), "cache_hit": False,
     }))
-    return {"query": q, "k": k, "took_ms": took_ms,
-            "labels_known": bool(label_map),
-            "bm25": _mark(plain, label_map), "hybrid": _mark(hybrid, label_map)}
+    return dict(body, took_ms=took_ms, cache_hit=False)
 
 
 @app.get("/")

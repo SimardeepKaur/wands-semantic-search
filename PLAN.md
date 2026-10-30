@@ -138,7 +138,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
   - Experiment: with Locust running, rebuild in place (delete and recreate under one name), then rebuild with the alias swap. Count failed and empty responses.
   - Done when: both counts in `results/perf.csv`, `DECISIONS.md` "Index rebuilds" entry.
 
-- [ ] **11. Cache**
+- [x] **11. Cache** (done; off: 24 req/s at p50 1.2s; on: 44 req/s at p50 6ms, hit rate 0.936)
   - Do: Redis in `docker-compose.yml`. Key: normalised query, method, filter. Checked before searching.
   - Experiment: 50 queries per second, cache off vs on, p50 and p99. Queries drawn at random from the 480 WANDS queries (this mix is written down, since it sets the hit rate).
   - Done when: numbers and hit rate in `results/perf.csv`, `DECISIONS.md` "Cache" entry.

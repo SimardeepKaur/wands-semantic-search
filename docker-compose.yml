@@ -1,5 +1,5 @@
 # Local services for the WANDS search rebuild.
-# One Elasticsearch node. Redis is added in item 11.
+# One Elasticsearch node and one Redis for the search cache.
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
@@ -18,6 +18,16 @@ services:
     volumes:
       # Named volume so the index survives `docker compose down` and restarts.
       - esdata:/usr/share/elasticsearch/data
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: wands-redis
+    # Small and bounded: the cache holds JSON search responses, nothing precious.
+    # When full, Redis evicts the least recently used keys.
+    command: ["redis-server", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+    mem_limit: 128m
+    ports:
+      - "6379:6379"
 
 volumes:
   esdata:
