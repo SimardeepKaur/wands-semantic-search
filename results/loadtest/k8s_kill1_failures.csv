@@ -1,0 +1,2 @@
+Method,Name,Error,Occurrences,First Seen,Last Seen
+GET,/search,CatchResponseError('http 0'),70,2026-10-30T22:49:46Z,2026-10-30T22:50:44Z

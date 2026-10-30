@@ -1,0 +1,55 @@
+# The search API: 3 replicas of the item-13 service image. The image is
+# loaded into the kind node with `kind load docker-image wands-api:slim`,
+# hence imagePullPolicy Never. Replica count evidence: the kill-a-replica
+# experiment in docs/experiments.md (item 15).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wands-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: wands-api
+  template:
+    metadata:
+      labels:
+        app: wands-api
+    spec:
+      containers:
+        - name: api
+          image: wands-api:slim
+          imagePullPolicy: Never
+          env:
+            - name: WANDS_ES_URL
+              value: http://elasticsearch:9200
+            - name: REDIS_HOST
+              value: redis
+          ports:
+            - containerPort: 8000
+          # only send traffic to a pod whose model and resources are loaded
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 24
+          resources:
+            requests:
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wands-api
+spec:
+  type: NodePort
+  selector:
+    app: wands-api
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30080

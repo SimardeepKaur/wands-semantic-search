@@ -165,7 +165,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
   - Done when: the check is green on `main`, red on the evidence PR, and the PR link is in `DECISIONS.md` "Eval gate".
   - Note: CPU query encoding on the runner can differ from MPS in the last float digits. If that moves the score, the gate compares against the score the runner itself measured on `main`, and this is written down.
 
-- [ ] **15. Kubernetes** (Docker Compose stopped)
+- [x] **15. Kubernetes** (done; kill experiment: 70 of 536 requests failed at 1 replica, 0 of 836 at 3; warm cluster held 45.6 req/s at p50 4 ms)
   - Do: `k8s/` with Deployment (3 replicas, readiness probe) and Service for the API, plus Elasticsearch and Redis. kind cluster, image loaded with `kind load`. Locust against it.
   - Experiment: kill a pod during a load test, with 1 replica and with 3. Compare failures.
   - If 3 replicas plus Elasticsearch do not fit in Docker's memory: record the measured memory, then stop and ask.
