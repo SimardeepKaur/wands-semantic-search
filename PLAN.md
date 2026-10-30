@@ -133,7 +133,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
   - Do: `src/api.py` (FastAPI). Encode the query on CPU with the chosen model, run the chosen hybrid on `products_live`, optional product-class filter, return 10. Demo page at `/`: BM25 next to hybrid, and for WANDS queries each result marked Exact, Partial or unlabelled. JSON request logs from the start (query, latency, result count, cache hit).
   - Done when: a smoke test passes for `/`, `/search` and `/health`. For 20 WANDS queries the API returns the same product IDs as the eval run of the same method.
 
-- [ ] **10. Alias swap**
+- [x] **10. Alias swap** (done; in place: 30 failures and a 139s incomplete window, swap: 0 failures)
   - Do: `src/rebuild_index.py`: build a new dated index, check the count, move `products_live` in one atomic step.
   - Experiment: with Locust running, rebuild in place (delete and recreate under one name), then rebuild with the alias swap. Count failed and empty responses.
   - Done when: both counts in `results/perf.csv`, `DECISIONS.md` "Index rebuilds" entry.

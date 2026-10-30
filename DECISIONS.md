@@ -79,3 +79,9 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Rejected:** Rank 16 (more capacity to learn the wrong objective, worse on every metric). Full fine-tuning (worst scores, 575x the artifact size).
 - **Evidence:** runs `lora_r4` vs `lora_r16` in `results/runs.csv`; `results/perf.csv` finetune rows; MLflow.
 - **Why (in my words):**
+
+### Index rebuilds
+- **Chosen:** Build a new dated index beside the live one, check the count, move the `products_live` alias in one atomic step (`src/rebuild_index.py`). The old index is kept as the rollback target.
+- **Rejected:** Rebuilding in place under one name. Under 6 requests/s it produced 30 failed or empty responses and left the index incomplete for 139 seconds, most of that invisible to error counts (responses looked fine while missing most of the catalogue). The alias swap produced 0 failures on the same load.
+- **Evidence:** `results/perf.csv` rebuild_under_load rows; Locust CSVs in `results/loadtest/`; `docs/experiments.md` item 10.
+- **Why (in my words):**

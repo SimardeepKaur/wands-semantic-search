@@ -26,28 +26,28 @@ DIMS = {"mpnet": 768, "minilm": 384,
         "lora_r4": 384, "lora_r16": 384, "full_ft": 384}
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model", choices=DIMS, required=True)
-    parser.add_argument("--recreate", action="store_true")
-    args = parser.parse_args()
+def build_index(es, model, index=None, recreate=False, aliases=None):
+    """Create a dated product index for a model's stored vectors and fill it.
 
-    index = f"products_{args.model}_{dt.date.today():%Y%m%d}"
-    es = Elasticsearch(ES_URL, request_timeout=120)
+    Returns the index name. Used by the command line below and by
+    src/rebuild_index.py (which follows it with an atomic alias swap).
+    """
+    index = index or f"products_{model}_{dt.date.today():%Y%m%d}"
 
-    vectors = np.load(f"data/vectors/products_{args.model}.npy")
-    ids = np.load(f"data/vectors/product_ids_{args.model}.npy")
-    assert vectors.shape == (len(ids), DIMS[args.model]), vectors.shape
+    vectors = np.load(f"data/vectors/products_{model}.npy")
+    ids = np.load(f"data/vectors/product_ids_{model}.npy")
+    assert vectors.shape == (len(ids), DIMS[model]), vectors.shape
 
     if es.indices.exists(index=index):
-        if not args.recreate:
+        if not recreate:
             raise SystemExit(f"{index} already exists. Use --recreate to rebuild it.")
         es.indices.delete(index=index)
 
     mapping = dict(MAPPING["properties"])
-    mapping["vector"] = {"type": "dense_vector", "dims": DIMS[args.model],
+    mapping["vector"] = {"type": "dense_vector", "dims": DIMS[model],
                          "index": True, "similarity": "cosine"}
-    es.indices.create(index=index, settings=SETTINGS, mappings={"properties": mapping})
+    es.indices.create(index=index, settings=SETTINGS, mappings={"properties": mapping},
+                      aliases={a: {} for a in aliases} if aliases else None)
 
     df = pd.read_csv(PRODUCTS_CSV, sep="\t")
     df = df.rename(columns={"category hierarchy": "category_hierarchy"})
@@ -77,6 +77,16 @@ def main():
     print(f"{index}: {count} documents, expected {len(df)}")
     if count != len(df):
         raise SystemExit("Count mismatch.")
+    return index
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", choices=DIMS, required=True)
+    parser.add_argument("--recreate", action="store_true")
+    args = parser.parse_args()
+    es = Elasticsearch(ES_URL, request_timeout=120)
+    build_index(es, args.model, recreate=args.recreate)
 
 
 if __name__ == "__main__":
