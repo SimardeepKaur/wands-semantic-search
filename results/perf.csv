@@ -26,3 +26,7 @@ date,experiment,metric,value,notes
 2026-10-30,cache_50qps,on_p50_ms,6,"43.9 req/s sustained"
 2026-10-30,cache_50qps,on_p99_ms,6500,"tail is the cold warm-up misses"
 2026-10-30,cache_50qps,hit_rate,0.936,"redis keyspace stats: 7379 hits, 503 misses; 480 distinct queries"
+2026-10-30,loadtest,rate6_p50_ms,20,"6 req/s 180s, cold cache, random WANDS mix, 0 failures of 1080"
+2026-10-30,loadtest,rate6_p99_ms,660,
+2026-10-30,loadtest,rate50_p50_ms,12,"50 req/s 180s, warm cache, 0 failures of 8800"
+2026-10-30,loadtest,rate50_p99_ms,160,
