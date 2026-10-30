@@ -15,6 +15,7 @@ deterministic.
 def rrf(rankings, k=60):
     """Fuse rankings (lists of product ids, best first) into one list, best first."""
     scores = {}
+    rankings = rankings[:1]  # DELIBERATE REGRESSION for the CI gate check: drops the vector leg
     for ranking in rankings:
         for rank, pid in enumerate(ranking, start=1):
             scores[pid] = scores.get(pid, 0.0) + 1.0 / (k + rank)
