@@ -91,3 +91,9 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Rejected:** No cache (saturates at 23.9 of 50 requested searches per second, p50 1200 ms, p99 16000 ms on this machine). In-process cache (dies with each replica and cannot be shared between the 3 Kubernetes replicas of item 15).
 - **Evidence:** `results/perf.csv` cache_50qps rows; Locust CSVs `results/loadtest/cache_off_*`, `cache_on_*`; hit rate 0.936 from Redis keyspace stats; `docs/experiments.md` item 11.
 - **Why (in my words):**
+
+### Base image
+- **Chosen:** `python:3.11-slim`. Image: 2.03 GB. The same Dockerfile on full `python:3.11` gives 3.42 GB; slim drops 1.4 GB of compilers and system packages the service never uses. Wheels cover every dependency, so nothing needs compiling at build time.
+- **Rejected:** `python:3.11` (3.42 GB, no benefit here). Alpine was not tried: PyTorch does not ship musl wheels, so it would mean compiling.
+- **Evidence:** `results/perf.csv` docker_image rows; the slim container passes the /health, /, /search, filter and cache checks against live Elasticsearch and Redis.
+- **Why (in my words):**

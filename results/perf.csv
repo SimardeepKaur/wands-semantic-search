@@ -30,3 +30,5 @@ date,experiment,metric,value,notes
 2026-10-30,loadtest,rate6_p99_ms,660,
 2026-10-30,loadtest,rate50_p50_ms,12,"50 req/s 180s, warm cache, 0 failures of 8800"
 2026-10-30,loadtest,rate50_p99_ms,160,
+2026-10-30,docker_image,python311_full_gb,3.42,"same Dockerfile, BASE=python:3.11"
+2026-10-30,docker_image,python311_slim_gb,2.03,"chosen; the 2 GB floor is CPU torch + the baked encoder"
