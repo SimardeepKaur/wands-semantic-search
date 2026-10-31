@@ -48,3 +48,13 @@ date,experiment,metric,value,notes
 2026-10-31,hf_space,cold_start_s,211,"restart clicked 02:37:58 UTC, first good public search 02:41:29 UTC; container start, ES boot, indexing 42994 products from baked vectors on CPU Upgrade (8 vCPU, 32 GB)"
 2026-10-31,hf_space,search_ms,133,"salon chair on the public URL, uncached, measured server-side (took_ms)"
 2026-10-31,hf_space,cached_ms,0.5,"same query repeated, Redis hit inside the Space container"
+2026-10-31,typo_typo50,plain_ms,68.8,"full hybrid request, 50 queries where the arm can fire, 5 interleaved rounds after warm-up, local M2 laptop under swap pressure"
+2026-10-31,typo_typo50,spell_ms,75.8,"full hybrid request, 50 queries where the arm can fire, 5 interleaved rounds after warm-up, local M2 laptop under swap pressure"
+2026-10-31,typo_typo50,spell_extra_ms,7.5,median paired difference against plain on the same queries
+2026-10-31,typo_typo50,fuzzyword_ms,82.1,"full hybrid request, 50 queries where the arm can fire, 5 interleaved rounds after warm-up, local M2 laptop under swap pressure"
+2026-10-31,typo_typo50,fuzzyword_extra_ms,11.3,median paired difference against plain on the same queries
+2026-10-31,typo_all480_fires,plain_ms,408.2,"full hybrid request, 32 queries where the arm can fire, 5 interleaved rounds after warm-up, local M2 laptop under swap pressure"
+2026-10-31,typo_all480_fires,spell_ms,400.8,"full hybrid request, 32 queries where the arm can fire, 5 interleaved rounds after warm-up, local M2 laptop under swap pressure"
+2026-10-31,typo_all480_fires,spell_extra_ms,38.3,median paired difference against plain on the same queries
+2026-10-31,typo_all480_fires,fuzzyword_ms,469.8,"full hybrid request, 32 queries where the arm can fire, 5 interleaved rounds after warm-up, local M2 laptop under swap pressure"
+2026-10-31,typo_all480_fires,fuzzyword_extra_ms,67.9,median paired difference against plain on the same queries

@@ -55,7 +55,7 @@ def main():
 
         # consistency with the eval code path on the current index, 20 queries
         from run_eval import method_hybrid
-        eval_run = method_hybrid("rrf")
+        eval_run = method_hybrid("rrf", spell=True)
         rows = pd.read_csv(PER_QUERY).head(20)
         mismatches = []
         for _, row in rows.iterrows():

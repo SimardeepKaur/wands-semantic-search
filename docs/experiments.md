@@ -403,3 +403,47 @@ Predictions:
   lamp; the suggester picked "grei", the stem of "grey"). Both beat plain on the
   typo set, but the vector leg already absorbs part of the damage, so the gains
   are smaller than the typo cost seen on the keyword leg alone.
+
+### Results (2026-10-31)
+
+Output of `eval/typo_report.py` (per-query files in `results/per_query/`):
+
+```
+typo set, 50 queries (every one has a word the catalogue has never seen)
+run                 strict  lenient  unlabelled
+typo50_clean_plain  0.2720  0.7760   0.1740   (same queries, no typo, for scale)
+typo50_plain        0.1980  0.5680   0.3440
+typo50_spell        0.2240  0.6580   0.2680
+typo50_fuzzyword    0.2500  0.6520   0.2740
+
+spell minus plain,     strict: +0.026, 95% interval +0.008 to +0.048; better 9, worse 1
+fuzzyword minus plain, strict: +0.052, 95% interval +0.016 to +0.098; better 10, worse 1
+fuzzyword minus spell, strict: +0.026, 95% interval -0.006 to +0.068 (a tie)
+
+all 480 (32 queries have an unseen word)
+all480_plain      0.3673  0.8048  0.1623
+all480_spell      0.3671  0.8033  0.1635
+all480_fuzzyword  0.3688  0.8046  0.1625
+
+spell minus plain,     strict: -0.0002, interval -0.0010 to +0.0004; better 1, worse 2
+fuzzyword minus plain, strict: +0.0015, interval +0.0002 to +0.0033; better 4, worse 0
+```
+
+Extra time per request where the arm fires (`eval/typo_latency.py`, 5 interleaved
+rounds, median paired difference, `perf.csv` typo_* rows): spell +7.5 ms on the typo
+set and +38.3 ms on the 32 firing queries of the 480; fuzzy +11.3 ms and +67.9 ms.
+The laptop was under swap pressure, so treat these as rough.
+
+**Verdict: spell correction ships.**
+- Spell passes both tests: reliably better on typos, interval on the 480 includes 0.
+- Fuzzy is reliably better on typos too. On the 480 its interval sits just above 0
+  (+0.0015, 4 better, 0 worse), so it fails the rule as written ("does not move").
+  The rule should have said "does not hurt". Under that reading both pass, and the
+  rule picks the simpler arm, which is spell. So the outcome does not depend on the
+  wording. Future pass rules say "lower bound of the interval above -X", not "includes 0".
+- Fuzzy against spell on typos is a tie (interval includes 0), and fuzzy costs more time.
+- Predictions: both people were right that the 480 ties (spell exactly, fuzzy almost).
+  Claude was wrong that spell would beat fuzzy on the typo set; fuzzy scored higher,
+  though not reliably. Gains were smaller than the typo cost, as Claude predicted:
+  the typo costs 0.074 strict (0.272 to 0.198), spell recovers 0.026 of it.
+- Still unfixed, as stated before running: "sopha" (spell turns it into "sophia").
