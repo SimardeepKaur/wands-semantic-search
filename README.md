@@ -8,8 +8,10 @@ fused with hand-written Reciprocal Rank Fusion, behind a FastAPI service with
 a Redis cache, an eval gate in CI, and a one-container public demo.
 
 **Live demo:** https://huggingface.co/spaces/rosie95/wands-search
-(the free tier sleeps when idle and rebuilds its index on wake, so the first
-visit after a sleep is slow; the measured cold start time is in
+(the Space sleeps after an hour without visitors and wakes on the next visit;
+waking rebuilds the index, which takes 3 minutes 31 seconds measured end to
+end, so give a sleeping demo a few minutes. Once awake, a search takes 133 ms
+uncached and 0.5 ms cached, measured on the public URL: `hf_space` rows in
 [`results/perf.csv`](results/perf.csv)).
 
 Every number in this README comes from a logged run in

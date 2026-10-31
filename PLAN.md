@@ -171,7 +171,7 @@ Status: `[ ]` to do, `[~]` in progress, `[!]` blocked, `[x]` done.
   - If 3 replicas plus Elasticsearch do not fit in Docker's memory: record the measured memory, then stop and ask.
   - Done when: failure counts in `results/perf.csv`, `DECISIONS.md` "Replicas" entry.
 
-- [ ] **17. Hugging Face Space**
+- [x] **17. Hugging Face Space** (done; live at https://rosie95-wands-search.hf.space on CPU Upgrade with 1 h auto-sleep; cold start 211 s, warm search 133 ms, cached 0.5 ms)
   - Do: `deploy/hf/`: one image with Elasticsearch, Redis and the API. Port 7860, user uid 1000, `node.store.allow_mmap: false`. Vectors downloaded from the GitHub release at image build time and indexed at startup. `.github/workflows/deploy.yml` pushes to the Space after the eval gate passes on `main`.
   - Needs: user step 3 (Space and `HF_TOKEN` secret).
   - Done when: the public URL answers `/health` and a search. Cold start time measured (from container start to the first good search) and in `results/perf.csv`.

@@ -65,7 +65,7 @@ Never say "as you know", "obviously" or "simply".
 | Load testing | Locust | Hand-written loops |
 | CI | GitHub Actions with an eval gate | Manual eval before merging |
 | Deployment | Kubernetes, locally with kind | Cloud Run, a single VM with Docker Compose |
-| Public demo hosting | Hugging Face Space (Docker SDK, free CPU tier) | Paid cloud VM with k3s, managed Kubernetes, no live demo |
+| Public demo hosting | Hugging Face Space (Docker SDK, CPU Upgrade at $0.03/h from prepaid credits, 1 h auto-sleep; HF removed the free CPU tier for new accounts, user decision 2026-10-30) | Free CPU Basic (gone), HF PRO subscription, paid cloud VM with k3s, managed Kubernetes, no live demo |
 | Monitoring | Structured JSON request logs plus a summary script | No logging |
 
 ## Decisions already made by the user (2026-10-28)
