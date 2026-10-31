@@ -45,3 +45,6 @@ date,experiment,metric,value,notes
 2026-10-30,k8s_loadtest,rate50_p99_ms,1500,
 2026-10-30,k8s_kill,replicas1_failures,70,"API pod force-killed at t=45s of 150s under 6 users; 70 of 536 requests failed until the new pod passed readiness; p99 19000 ms"
 2026-10-30,k8s_kill,replicas3_failures,0,"same kill with 3 replicas; 0 of 836 failed; p99 3200 ms"
+2026-10-31,hf_space,cold_start_s,211,"restart clicked 02:37:58 UTC, first good public search 02:41:29 UTC; container start, ES boot, indexing 42994 products from baked vectors on CPU Upgrade (8 vCPU, 32 GB)"
+2026-10-31,hf_space,search_ms,133,"salon chair on the public URL, uncached, measured server-side (took_ms)"
+2026-10-31,hf_space,cached_ms,0.5,"same query repeated, Redis hit inside the Space container"

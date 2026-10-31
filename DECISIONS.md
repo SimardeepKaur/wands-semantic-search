@@ -109,3 +109,9 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Rejected:** 1 replica.
 - **Evidence:** Kill-a-pod experiment on kind under 6 users of load (`perf.csv`, `k8s_kill`): with 1 replica, 70 of 536 requests failed while Kubernetes rebuilt the pod and waited for it to load the model and pass readiness; with 3 replicas, the same kill failed 0 of 836.
 - **Why (in my words):**
+
+### Demo hosting hardware
+- **Chosen:** Hugging Face Space on CPU Upgrade (8 vCPU, 32 GB, $0.03 per hour) paid from $5 of prepaid credits, with auto-sleep after 1 hour of inactivity. User decision 2026-10-30.
+- **Rejected:** Free CPU Basic (no longer exists for new accounts: the Space was quota-paused at creation, restart returned 403, and HF staff confirmed on the forum that compute Spaces now need a paid plan). PRO at $9 per month (always on, no wake wait, but a recurring charge). Always-on paid hardware without sleep (about $21.60 per month at $0.03 per hour).
+- **Evidence:** With sleep on, billing runs only while the Space is awake, so $5 covers roughly 166 awake-hours. Measured cold start on wake: 211 s; warm public search 133 ms uncached, 0.5 ms cached (`hf_space` rows in `results/perf.csv`).
+- **Why (in my words):**
