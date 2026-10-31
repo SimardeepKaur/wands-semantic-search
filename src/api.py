@@ -142,7 +142,7 @@ def search(q: str = Query(min_length=1), k: int = Query(10, ge=1, le=50),
     plain = bm25(state["es"], q, k=k, es_filter=es_filter)
 
     vec = state["model"].encode(q, normalize_embeddings=True).tolist()
-    bm_leg = bm25_patched(state["es"], q, TOP, synonyms=False, spell=False,
+    bm_leg = bm25_patched(state["es"], q, TOP, synonyms=False, spell=True,
                           rewrite=True, resources=state["resources"],
                           es_filter=es_filter)
     vec_leg = vector_knn(state["es"], ALIAS, vec, k=TOP, num_candidates=200,

@@ -354,3 +354,96 @@ With one replica the Service has no ready endpoint until the replacement pod
 starts, loads the encoder and passes its readiness probe; every request in
 that window fails. With three, the Service stops routing to the dead pod and
 the two survivors absorb the load with no visible failures.
+
+## Typo handling: per-word fuzzy fallback vs spell correction (2026-10-31)
+
+### Written before any run
+
+Why this is back after item 2 rejected fuzzy: item 2 applied fuzziness to every
+word of every query, which loosened queries that already worked (worse on 95
+queries, better on 48). Here both arms touch only words the catalogue has never
+seen (the 70,309-word vocabulary from product.csv). A query with no such word
+runs exactly the query it ran before: checked on three clean queries, identical
+top 100 with the fallback on and off. The 480 cannot decide this alone: almost
+none of its queries contain a typo, so a tie there is no data on typos.
+
+Arms, all inside the served hybrid (RRF k=60), changing only the keyword leg;
+the vector leg always encodes the query as typed:
+- plain: the served hybrid (`hybrid_rrf60`).
+- per-word fuzzy fallback (`hybrid_rrf60_fuzzyword`): each unseen word is matched
+  with fuzziness AUTO (1 edit for 3 to 5 letters, 2 for 6 or more), the rest exact.
+- spell correction (`hybrid_rrf60_spell`): each unseen word is replaced by the
+  term suggester's best guess (max 2 edits), the item 4 code unchanged.
+
+Typo set: `eval/typo50.csv`, made by `eval/make_typo_set.py` (seed 20261031):
+50 WANDS queries in seeded random order, one typo each in a content word of 4+
+letters, never the first letter, an even mix of dropped (13), swapped (13),
+doubled (12) and wrong-neighbour-key (12) letters. Typos that land on a catalogue
+word are thrown out: 4 of 54 tried (7.4%). That share is what any vocabulary
+trigger is blind to. Labels are kept by query_id.
+
+Pass rule (the user's, 2026-10-31): an arm wins only if (1) on the typo set, the
+95% paired bootstrap interval on strict P@10 against plain is above 0, and (2) on
+the 480 it does not move strict P@10, meaning its interval against a plain run
+on the same index includes 0. If both pass, pick the simpler. Simpler is defined
+now as spell correction: it is existing code and the query keeps its shape (only
+the words change). If neither passes, nothing ships and this section says so.
+
+Known before running, from probing the index: neither arm can fix "sopha", the
+query that started this. It is two edits from "sofa" ("ph" to "f"). Fuzzy AUTO
+allows one edit on a 5-letter word and reaches "sophia"; the suggester also
+picks "sophia". Sound-alike misspellings are not in this typo set.
+
+Predictions:
+- User: the per-word fallback beats spell correction on the typo set, and both
+  tie on the 480.
+- Claude: both tie on the 480. On the typo set spell correction does better than
+  the fallback, because fuzzy matches every near word and rare near words carry
+  high BM25 weight (on "gery" fuzzy's top keyword hits were a pillow and a genie
+  lamp; the suggester picked "grei", the stem of "grey"). Both beat plain on the
+  typo set, but the vector leg already absorbs part of the damage, so the gains
+  are smaller than the typo cost seen on the keyword leg alone.
+
+### Results (2026-10-31)
+
+Output of `eval/typo_report.py` (per-query files in `results/per_query/`):
+
+```
+typo set, 50 queries (every one has a word the catalogue has never seen)
+run                 strict  lenient  unlabelled
+typo50_clean_plain  0.2720  0.7760   0.1740   (same queries, no typo, for scale)
+typo50_plain        0.1980  0.5680   0.3440
+typo50_spell        0.2240  0.6580   0.2680
+typo50_fuzzyword    0.2500  0.6520   0.2740
+
+spell minus plain,     strict: +0.026, 95% interval +0.008 to +0.048; better 9, worse 1
+fuzzyword minus plain, strict: +0.052, 95% interval +0.016 to +0.098; better 10, worse 1
+fuzzyword minus spell, strict: +0.026, 95% interval -0.006 to +0.068 (a tie)
+
+all 480 (32 queries have an unseen word)
+all480_plain      0.3673  0.8048  0.1623
+all480_spell      0.3671  0.8033  0.1635
+all480_fuzzyword  0.3688  0.8046  0.1625
+
+spell minus plain,     strict: -0.0002, interval -0.0010 to +0.0004; better 1, worse 2
+fuzzyword minus plain, strict: +0.0015, interval +0.0002 to +0.0033; better 4, worse 0
+```
+
+Extra time per request where the arm fires (`eval/typo_latency.py`, 5 interleaved
+rounds, median paired difference, `perf.csv` typo_* rows): spell +7.5 ms on the typo
+set and +38.3 ms on the 32 firing queries of the 480; fuzzy +11.3 ms and +67.9 ms.
+The laptop was under swap pressure, so treat these as rough.
+
+**Verdict: spell correction ships.**
+- Spell passes both tests: reliably better on typos, interval on the 480 includes 0.
+- Fuzzy is reliably better on typos too. On the 480 its interval sits just above 0
+  (+0.0015, 4 better, 0 worse), so it fails the rule as written ("does not move").
+  The rule should have said "does not hurt". Under that reading both pass, and the
+  rule picks the simpler arm, which is spell. So the outcome does not depend on the
+  wording. Future pass rules say "lower bound of the interval above -X", not "includes 0".
+- Fuzzy against spell on typos is a tie (interval includes 0), and fuzzy costs more time.
+- Predictions: both people were right that the 480 ties (spell exactly, fuzzy almost).
+  Claude was wrong that spell would beat fuzzy on the typo set; fuzzy scored higher,
+  though not reliably. Gains were smaller than the typo cost, as Claude predicted:
+  the typo costs 0.074 strict (0.272 to 0.198), spell recovers 0.026 of it.
+- Still unfixed, as stated before running: "sopha" (spell turns it into "sophia").
