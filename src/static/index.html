@@ -19,11 +19,15 @@
   input#cls { flex:1 1 160px; }
   button { padding:9px 16px; font-size:15px; border:0; border-radius:8px;
     background:#1c1c1c; color:#fff; cursor:pointer; }
-  .meta { color:var(--muted); font-size:13px; min-height:18px; margin-bottom:14px; }
-  .cols { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-  @media (max-width:760px){ .cols { grid-template-columns:1fr; } }
-  .col h2 { font-size:14px; margin:0 0 8px; color:var(--muted);
-            text-transform:uppercase; letter-spacing:.04em; }
+  .meta { color:var(--muted); font-size:13px; min-height:18px; margin-bottom:10px; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:6px; }
+  .tab { background:none; color:var(--muted); border:0; border-radius:0;
+         border-bottom:2px solid transparent; padding:9px 12px; font-size:14px;
+         cursor:pointer; }
+  .tab[aria-selected="true"] { color:var(--fg); border-bottom-color:var(--fg);
+                               font-weight:600; }
+  mark { background:#ffe88f; color:inherit; padding:0 1px; border-radius:2px; }
+  .empty { color:var(--muted); font-size:14px; padding:20px 2px; }
   ol { margin:0; padding:0; list-style:none; counter-reset:r; }
   li { border-top:1px solid var(--line); padding:8px 2px; display:flex; gap:10px; }
   li::before { counter-increment:r; content:counter(r); color:var(--muted);
@@ -39,28 +43,66 @@
 <body>
 <div class="wrap">
   <h1>WANDS semantic search</h1>
-  <div class="sub">Plain keyword search next to the measured best hybrid
-    (BM25 + MiniLM vectors fused with RRF). Type one of the 480 WANDS queries
-    to see relevance labels.</div>
+  <div class="sub">The measured best hybrid (BM25 + MiniLM vectors fused with
+    RRF), with plain keyword search on the second tab to compare. Type one of
+    the 480 WANDS queries to see relevance labels.</div>
   <form id="f">
     <input type="text" id="q" placeholder="e.g. smart coffee table" autofocus>
     <input type="text" id="cls" placeholder="class filter (optional, exact)">
     <button>Search</button>
   </form>
   <div class="meta" id="meta"></div>
-  <div class="cols">
-    <div class="col"><h2>BM25 (keyword floor)</h2><ol id="bm25"></ol></div>
-    <div class="col"><h2>Hybrid (deployed)</h2><ol id="hybrid"></ol></div>
+  <div class="tabs" role="tablist">
+    <button type="button" class="tab" role="tab" id="tab-hybrid"
+            aria-selected="true" aria-controls="panel-hybrid">Best match (hybrid)</button>
+    <button type="button" class="tab" role="tab" id="tab-bm25"
+            aria-selected="false" aria-controls="panel-bm25">Keyword (BM25)</button>
+  </div>
+  <div id="panel-hybrid" role="tabpanel" aria-labelledby="tab-hybrid">
+    <ol id="hybrid"></ol><div class="empty" id="empty-hybrid" hidden></div>
+  </div>
+  <div id="panel-bm25" role="tabpanel" aria-labelledby="tab-bm25" hidden>
+    <ol id="bm25"></ol><div class="empty" id="empty-bm25" hidden></div>
   </div>
 </div>
 <script>
 const f = document.getElementById("f"), meta = document.getElementById("meta");
-function row(h, labelsKnown) {
+
+function showTab(which) {
+  for (const w of ["hybrid", "bm25"]) {
+    document.getElementById("tab-" + w)
+      .setAttribute("aria-selected", w === which ? "true" : "false");
+    document.getElementById("panel-" + w).hidden = w !== which;
+  }
+}
+document.getElementById("tab-hybrid").addEventListener("click", () => showTab("hybrid"));
+document.getElementById("tab-bm25").addEventListener("click", () => showTab("bm25"));
+
+// Wrap query words found in the text in <mark>, so the shopper sees why a
+// result matched. Prefix match, so "chair" also lights up "chairs".
+function highlighted(text, tokens) {
+  const out = document.createElement("span");
+  if (!tokens.length || !text) { out.textContent = text || ""; return out; }
+  const re = new RegExp("\\b(" +
+    tokens.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") +
+    ")", "gi");
+  let last = 0, m;
+  while ((m = re.exec(text)) !== null) {
+    out.appendChild(document.createTextNode(text.slice(last, m.index)));
+    const mk = document.createElement("mark"); mk.textContent = m[0];
+    out.appendChild(mk);
+    last = m.index + m[0].length;
+  }
+  out.appendChild(document.createTextNode(text.slice(last)));
+  return out;
+}
+
+function row(h, labelsKnown, tokens) {
   const li = document.createElement("li");
   const name = document.createElement("div"); name.className = "name";
-  name.textContent = h.product_name;
+  name.appendChild(highlighted(h.product_name, tokens));
   const cls = document.createElement("div"); cls.className = "cls";
-  cls.textContent = h.product_class || "";
+  cls.appendChild(highlighted(h.product_class || "", tokens));
   name.appendChild(cls);
   li.appendChild(name);
   if (labelsKnown) {
@@ -85,10 +127,20 @@ f.addEventListener("submit", async (e) => {
     const d = await r.json();
     meta.textContent = d.took_ms + " ms" +
       (d.labels_known ? " · WANDS query, labels shown" : " · not a WANDS query, no labels");
+    const tokens = q.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 1);
     for (const side of ["bm25", "hybrid"]) {
       const ol = document.getElementById(side);
-      ol.replaceChildren(...d[side].map(h => row(h, d.labels_known)));
+      ol.replaceChildren(...d[side].map(h => row(h, d.labels_known, tokens)));
+      const none = d[side].length === 0;
+      const empty = document.getElementById("empty-" + side);
+      empty.hidden = !none;
+      if (none) {
+        empty.textContent = "No results for “" + q + "”." + (cls
+          ? " The class filter needs the exact class name: try clearing it."
+          : " Try fewer or simpler words.");
+      }
     }
+    showTab("hybrid");
   } catch (err) { meta.textContent = "Search failed: " + err.message; }
 });
 </script>
