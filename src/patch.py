@@ -87,8 +87,12 @@ def unseen(res, w):
     return w not in res["vocab"] and len(w) >= 3
 
 
-def correct(es, res, query_words):
-    """Replace words the catalogue has never seen with the term suggester's best guess."""
+def correct(es, res, query_words, sort="score"):
+    """Replace words the catalogue has never seen with the term suggester's best guess.
+
+    sort="score" takes the closest word first; sort="frequency" takes the word in
+    the most product names first (Elasticsearch's built-in suggester sort).
+    """
     out = []
     for w in query_words:
         if not unseen(res, w):
@@ -96,14 +100,14 @@ def correct(es, res, query_words):
             continue
         resp = es.search(index="products_live", size=0, suggest={
             "fix": {"text": w, "term": {"field": "product_name", "suggest_mode": "missing",
-                                        "max_edits": 2}}})
+                                        "max_edits": 2, "sort": sort}}})
         options = resp["suggest"]["fix"][0]["options"]
         out.append(options[0]["text"] if options else w)
     return out
 
 
 def bm25_patched(es, query, k=10, synonyms=True, spell=True, rewrite=True, resources=None,
-                 es_filter=None, fuzzy_unseen=False):
+                 es_filter=None, fuzzy_unseen=False, spell_sort="score"):
     """Top k product dicts for a query, with the chosen patches applied.
 
     es_filter: optional Elasticsearch filter clause (scores unchanged), for
@@ -112,7 +116,7 @@ def bm25_patched(es, query, k=10, synonyms=True, spell=True, rewrite=True, resou
     res = resources or build_resources()
     qw = words(query)
     if spell:
-        qw = correct(es, res, qw)
+        qw = correct(es, res, qw, sort=spell_sort)
     fuzzy_words = [w for w in qw if unseen(res, w)] if fuzzy_unseen else []
     if fuzzy_words:
         exact = [w for w in qw if w not in fuzzy_words]

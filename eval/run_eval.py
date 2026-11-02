@@ -136,7 +136,8 @@ def method_vector(model_key, exact=False):
     return run
 
 
-def method_hybrid(kind, w=None, model_key="minilm", spell=False, fuzzy_unseen=False):
+def method_hybrid(kind, w=None, model_key="minilm", spell=False, fuzzy_unseen=False,
+                  spell_sort="score"):
     """RRF (k=60) or weighted blend over the top 100 from the patched BM25
     (class-boost rewrite, the item 4 winner) and the top 100 from a vector index.
 
@@ -157,7 +158,8 @@ def method_hybrid(kind, w=None, model_key="minilm", spell=False, fuzzy_unseen=Fa
 
     def run(_qid, text):
         bm = bm25_patched(es, text, top, synonyms=False, spell=spell, rewrite=True,
-                          resources=resources, fuzzy_unseen=fuzzy_unseen)
+                          resources=resources, fuzzy_unseen=fuzzy_unseen,
+                          spell_sort=spell_sort)
         vec = model.encode(text, normalize_embeddings=True).tolist()
         vc = vector_knn(es, index, vec, k=top, num_candidates=200)
         if kind == "rrf":
@@ -195,6 +197,8 @@ def get_method(name, labels):
         return method_hybrid("rrf")
     if name == "hybrid_rrf60_spell":
         return method_hybrid("rrf", spell=True)
+    if name == "hybrid_rrf60_spellfreq":
+        return method_hybrid("rrf", spell=True, spell_sort="frequency")
     if name == "hybrid_rrf60_fuzzyword":
         return method_hybrid("rrf", fuzzy_unseen=True)
     if name.startswith("blend_w"):

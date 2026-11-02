@@ -447,3 +447,130 @@ The laptop was under swap pressure, so treat these as rough.
   though not reliably. Gains were smaller than the typo cost, as Claude predicted:
   the typo costs 0.074 strict (0.272 to 0.198), spell recovers 0.026 of it.
 - Still unfixed, as stated before running: "sopha" (spell turns it into "sophia").
+
+## Spell correction: frequency-first suggestion vs closest-first (2026-11-02)
+
+### Written before any run
+
+The gap: spell correction turns "sopha" into "sophia". The term suggester sorts
+by closeness first, so "sophia" (1 edit) beats "sofa" (2 edits) even though
+"sofa" is in far more product names. The fix under test changes only that
+choice: the suggester's built-in `sort: "frequency"` (document frequency first,
+then closeness). Nothing else in the keyword or vector leg changes.
+
+Arms, inside the served hybrid (RRF k=60), keyword leg only:
+- spell (`hybrid_rrf60_spell`): what ships today, closest first.
+- spellfreq (`hybrid_rrf60_spellfreq`): the same code with `sort: "frequency"`.
+
+Sets:
+- soundalike50 (`eval/soundalike50.csv`, made by `eval/make_soundalike_set.py`,
+  seed 20261102): real human misspellings from the Birkbeck spelling error
+  corpus, one per query, picked at random. It must not be built from "ph to f"
+  or any other swap we already know, or the fix is graded on its own rules.
+  Birkbeck covers 348 of the 480 WANDS queries; Wikipedia's machine-readable
+  common misspellings list covers 54, so Birkbeck was used. Edit distance mix
+  of the 50: 1 edit 45, 2 edits 4, 3 or more 1. "sopha" is not in it ("sofa" is
+  not in the corpus). The name stays soundalike50; most entries are real
+  phonetic misspellings ("wite", "fraim", "hardwear"), not all. Rejected on the
+  first try (no eval run): generating 2-edit misspellings with the same Soundex code. Soundex
+  ignores vowels, h, w and y and groups c g j k q s x z together, so almost any
+  string passes ("sunflgojwer", "bflba", "deykh"). A tighter version with
+  per-edit Soundex-group rules was still not what shoppers type ("frhamhe",
+  "whuteh") and was a rule list we chose.
+- typo50: the existing one-typo set (`eval/typo50.csv`), unchanged.
+- all 480.
+
+Pass rule (agreed 2026-11-02), all strict P@10, 95% paired bootstrap, spellfreq
+minus spell on the same set:
+1. soundalike50: interval above 0.
+2. typo50 must not get worse: interval includes 0 or sits above it. If it fails,
+   stop: nothing ships and this section says so.
+3. all 480: interval includes 0 or sits above it.
+Also reported, not part of the rule: the share of typo words corrected to the
+intended word on each set, and extra time per query where correction fires.
+
+Claude's prediction:
+- "sopha" becomes "sofa".
+- soundalike50: spellfreq beats spell, about +0.02 to +0.04 strict. It passes
+  test 1 if the set has enough 2-edit misspellings of common words.
+- typo50: spellfreq is worse, about -0.01 to -0.03 strict, with more queries
+  worse than better. Every typo50 word is 1 edit from the answer, and frequency
+  first will pick a more common word 2 edits away whenever one exists. I think
+  it is a little more likely than not (about 55%) that the interval sits fully
+  below 0, which fails test 2 and stops the experiment.
+- all 480: a tie. Only 32 queries fire correction.
+
+Update after the set was built, before any run: 45 of the 50 are 1 edit away,
+the same shape as typo50, not the 2-edit case "sopha" needs. So I now expect
+soundalike50 to behave like typo50: spellfreq worse than spell or a tie, and
+test 1 fails. If it does, frequency-first does not ship even if typo50 passes.
+
+### Results (2026-11-02)
+
+Output of `eval/typo_report.py` (per-query files in `results/per_query/`). The
+index was the same as on 2026-10-31: a re-run of spell on typo50 gave strict
+0.2240 again.
+
+```
+soundalike50 (49 of 50 have a word the catalogue has never seen)
+run                       strict  lenient  unlabelled
+soundalike50_clean_plain  0.3480  0.7600   0.2140   (same queries, no misspelling, for scale)
+soundalike50_plain        0.2960  0.5660   0.3540
+soundalike50_spell        0.3000  0.6400   0.3100
+soundalike50_spellfreq    0.2860  0.6120   0.3380
+
+spellfreq minus spell, strict: -0.014, 95% interval -0.042 to +0.004; better 1, worse 2
+spell minus plain,     strict: +0.004, 95% interval -0.016 to +0.030; better 3, worse 6
+
+typo50
+typo50_spell        0.2240  0.6580  0.2680   (2026-10-31 run)
+typo50_spellfreq    0.2340  0.6460  0.2980
+
+spellfreq minus spell, strict: +0.010, 95% interval -0.008 to +0.032; better 3, worse 1
+```
+
+`soundalike50_clean_plain` ran with the served method (`hybrid_rrf60_spell`) by
+mistake, not `hybrid_rrf60`. On clean queries correction almost never fires, so
+it is close to plain, but it is labelled by its real method in `runs.csv`.
+
+Words corrected to the intended word (the term suggester called directly on each
+misspelled word, compared with the analyzed form of the intended word):
+
+| set | closest first | frequency first |
+|---|---|---|
+| typo50 (50 fire) | 41 | 37 |
+| soundalike50 (49 fire) | 34 | 28 |
+
+Where the two disagree, frequency first picks a common word that is further
+away: "toilt" to tile, "dryr" to door, "truk" to task, "claer" to chair,
+"towl" to table. It wins on "sopha" (sofa), "fraim" (frame), "draww" (drawer),
+"decortaive" (decor) and "lightin" (light).
+
+Time: not judged. The laptop was under heavy memory pressure (about 4 GB in the
+memory compressor), and per-query times were 0.6 to 1.7 s against 39 ms for the
+same typo50 spell run on 2026-10-31.
+
+**Verdict: frequency first does not ship. It corrects fewer 1-edit misspellings
+to the intended word, with no reliable P@10 change, and it is untested on 2-edit
+misspellings.**
+- Test 1 fails: on soundalike50 the interval (-0.042 to +0.004) is not above 0.
+  The point estimate is negative.
+- What the set tested: 45 of the 50 are 1 edit. On those, 3 queries changed
+  (1 better, 2 worse, mean -0.016). The 5 with 2 or more edits all tie (no change).
+  So this is a result on 1-edit misspellings only; the 2-edit case ("sopha") was
+  not tested.
+- Test 2 (the typo50 guard) passes: interval -0.008 to +0.032 includes 0.
+- Test 3 was not run. It cannot change the verdict once test 1 fails, and it is
+  an 8-minute run on a laptop already swapping.
+- Predictions: Claude's first guess (soundalike50 better, typo50 likely fails
+  the guard) was wrong on both. The guess updated after seeing the set (45 of 50
+  are 1 edit, so soundalike50 is a tie or worse) was right. On the words
+  themselves frequency first is worse on both sets (4 and 6 fewer correct); the
+  vector leg hides most of that in P@10.
+- "sopha" stays a known gap. Frequency first fixes it, but on 1-edit
+  misspellings it recovers the intended word less often (28 vs 34, 37 vs 41).
+  Whether it helps on 2-edit misspellings needs a set that is mostly 2-edit.
+  Weighing closeness and frequency together (the 10-line version of option 1)
+  would be a new experiment.
+
+- Next: the 2-edit run, frequency first vs closest first on `eval/misspell2e50.csv` (50 real 2-edit misspellings pooled from five lists, made by `eval/make_misspell2_set.py`; not yet run, as it needs Elasticsearch).
