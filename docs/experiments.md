@@ -504,3 +504,64 @@ Update after the set was built, before any run: 45 of the 50 are 1 edit away,
 the same shape as typo50, not the 2-edit case "sopha" needs. So I now expect
 soundalike50 to behave like typo50: spellfreq worse than spell or a tie, and
 test 1 fails. If it does, frequency-first does not ship even if typo50 passes.
+
+### Results (2026-11-02)
+
+Output of `eval/typo_report.py` (per-query files in `results/per_query/`). The
+index was the same as on 2026-10-31: a re-run of spell on typo50 gave strict
+0.2240 again.
+
+```
+soundalike50 (49 of 50 have a word the catalogue has never seen)
+run                       strict  lenient  unlabelled
+soundalike50_clean_plain  0.3480  0.7600   0.2140   (same queries, no misspelling, for scale)
+soundalike50_plain        0.2960  0.5660   0.3540
+soundalike50_spell        0.3000  0.6400   0.3100
+soundalike50_spellfreq    0.2860  0.6120   0.3380
+
+spellfreq minus spell, strict: -0.014, 95% interval -0.042 to +0.004; better 1, worse 2
+spell minus plain,     strict: +0.004, 95% interval -0.016 to +0.030; better 3, worse 6
+
+typo50
+typo50_spell        0.2240  0.6580  0.2680   (2026-10-31 run)
+typo50_spellfreq    0.2340  0.6460  0.2980
+
+spellfreq minus spell, strict: +0.010, 95% interval -0.008 to +0.032; better 3, worse 1
+```
+
+`soundalike50_clean_plain` ran with the served method (`hybrid_rrf60_spell`) by
+mistake, not `hybrid_rrf60`. On clean queries correction almost never fires, so
+it is close to plain, but it is labelled by its real method in `runs.csv`.
+
+Words corrected to the intended word (the term suggester called directly on each
+misspelled word, compared with the analyzed form of the intended word):
+
+| set | closest first | frequency first |
+|---|---|---|
+| typo50 (50 fire) | 41 | 37 |
+| soundalike50 (49 fire) | 34 | 28 |
+
+Where the two disagree, frequency first picks a common word that is further
+away: "toilt" to tile, "dryr" to door, "truk" to task, "claer" to chair,
+"towl" to table. It wins on "sopha" (sofa), "fraim" (frame), "draww" (drawer),
+"decortaive" (decor) and "lightin" (light).
+
+Time: not judged. The laptop was under heavy memory pressure (about 4 GB in the
+memory compressor), and per-query times were 0.6 to 1.7 s against 39 ms for the
+same typo50 spell run on 2026-10-31.
+
+**Verdict: frequency first does not ship.**
+- Test 1 fails: on soundalike50 the interval (-0.042 to +0.004) is not above 0.
+  The point estimate is negative.
+- Test 2 (the typo50 guard) passes: interval -0.008 to +0.032 includes 0.
+- Test 3 was not run. It cannot change the verdict once test 1 fails, and it is
+  an 8-minute run on a laptop already swapping.
+- Predictions: Claude's first guess (soundalike50 better, typo50 likely fails
+  the guard) was wrong on both. The guess updated after seeing the set (45 of 50
+  are 1 edit, so soundalike50 is a tie or worse) was right. On the words
+  themselves frequency first is worse on both sets (4 and 6 fewer correct); the
+  vector leg hides most of that in P@10.
+- "sopha" stays a known gap. Frequency first fixes it but breaks more real
+  misspellings than it fixes. A fix would need to weigh closeness and frequency
+  together (the 10-line version of option 1), which is a new experiment.
+
