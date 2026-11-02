@@ -573,3 +573,4 @@ misspellings.**
   Weighing closeness and frequency together (the 10-line version of option 1)
   would be a new experiment.
 
+- Next: the 2-edit run, frequency first vs closest first on `eval/misspell2e50.csv` (50 real 2-edit misspellings pooled from five lists, made by `eval/make_misspell2_set.py`; not yet run, as it needs Elasticsearch).
