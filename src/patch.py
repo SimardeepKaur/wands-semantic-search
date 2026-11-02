@@ -95,7 +95,7 @@ def correct(es, res, query_words, sort="score"):
     """
     out = []
     for w in query_words:
-        if False:  # BROKEN ON PURPOSE: CI must go red
+        if not unseen(res, w):
             out.append(w)
             continue
         resp = es.search(index="products_live", size=0, suggest={
