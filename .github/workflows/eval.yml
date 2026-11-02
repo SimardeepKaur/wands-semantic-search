@@ -43,7 +43,9 @@ jobs:
         run: pip install -r requirements-api.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
       - name: Unit tests (tests/, no Elasticsearch needed)
-        run: pip install pytest==9.2.0 && python -m pytest tests/ -v
+        # httpx2: starlette's test client (imported by tests/test_api.py) needs it.
+        # Test-only, so it stays out of requirements-api.txt and the images.
+        run: pip install pytest==9.2.0 httpx2==2.16.0 && python -m pytest tests/ -v
 
       - name: WANDS dataset (public)
         run: git clone --depth 1 https://github.com/wayfair/WANDS.git data/WANDS
