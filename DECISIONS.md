@@ -35,7 +35,7 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 ### Fuzzy matching
 - **Chosen:** No fuzzy matching by default. Spelling is handled by spell correction in the patched baseline (item 4).
 - **Rejected:** `fuzziness: AUTO` on every query.
-- **Evidence:** `docs/experiments.md`, item 2. On "ligth bulb" fuzzy brings in the Light Bulbs class. On "toddler couch fold out" it brings in unrelated products and cannot map "couch" to "sofa". Full set (runs `bm25_plain`, `bm25_fuzzy`): strict P@10 0.3229 -> 0.2977, difference -0.0252, 95% interval -0.0365 to -0.0140. Fuzzy is better on 48 queries and worse on 95. Lenient also drops (0.6892 -> 0.6381) and unlabelled share rises (0.2554 -> 0.3090). Median time per query 13.0 ms -> 29.7 ms.
+- **Evidence:** `docs/experiments.md`, item 2. On "ligth bulb" fuzzy brings in the Light Bulbs class. On "toddler couch fold out" it brings in unrelated products and cannot map "couch" to "sofa". Full set (runs `bm25_plain`, `bm25_fuzzy`): strict P@10 0.3229 -> 0.2977, difference -0.0252, 95% interval -0.0365 to -0.0140. Fuzzy is better on 48 queries and worse on 95. Lenient also drops (0.6892 -> 0.6381) and unlabelled share rises (0.2554 -> 0.3090). Median time per query 13.0 ms -> 29.7 ms (median of the `seconds` column in `results/per_query/bm25_plain.csv` and `bm25_fuzzy.csv`).
 - **Why (in my words):**
 
 ### What goes into the patched baseline
@@ -53,7 +53,7 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 ### Encoder
 - **Chosen:** `all-MiniLM-L6-v2`. The stack originally fixed `all-mpnet-base-v2`; the measurement said otherwise and the user agreed to switch (2026-10-29). All later work (pooling, hybrid, LoRA, the service) uses MiniLM.
 - **Rejected:** `all-mpnet-base-v2` (bigger and slower, and it scored lower here). Calling an LLM to embed (cost and latency, not measured).
-- **Evidence:** `minilm_hnsw` beats `mpnet_hnsw` on strict P@10: 0.3475 vs 0.3315 (+0.0160, 95% interval 0.0035 to 0.0281, reliable). Also fewer unlabelled results (0.1919 vs 0.2115), 4x faster query encoding (16.4 vs 63.5 ms p50), 6x faster product encoding (7.7 vs 46.1 min), half the vector size (384 vs 768). Runs `mpnet_hnsw`, `mpnet_exact`, `minilm_hnsw`; `docs/experiments.md` item 5.
+- **Evidence:** `minilm_hnsw` beats `mpnet_hnsw` on strict P@10: 0.3475 vs 0.3315 (+0.0160, 95% interval 0.0035 to 0.0281, reliable). Also fewer unlabelled results (0.1919 vs 0.2115), 4x lower query latency, encoding included (16.4 vs 63.5 ms p50), 6x faster product encoding (7.7 vs 46.1 min), half the vector size (384 vs 768). Runs `mpnet_hnsw`, `mpnet_exact`, `minilm_hnsw`; `docs/experiments.md` item 5.
 - **Why (in my words):**
 
 ### Pooling (product vector from feature vectors)
