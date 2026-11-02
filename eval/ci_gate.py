@@ -1,8 +1,10 @@
 """The CI eval gate (item 14).
 
-Runs the serving method (hybrid RRF) over all 480 WANDS queries against the
+Runs the serving method (hybrid RRF with spell correction on the keyword leg) over all 480 WANDS queries against the
 index CI just built, and fails if strict P@10 lands below the best logged run
-of that method in results/runs.csv, minus a small documented tolerance.
+of the serving method or plain hybrid RRF in results/runs.csv, minus a small
+documented tolerance. Plain RRF counts too, so switching on spell correction
+(a tie on the 480) did not lower the bar.
 
 The tolerance exists because two things legitimately wobble between machines
 and index builds without any code being worse (both in PROGRESS.md
@@ -26,19 +28,20 @@ sys.path.insert(0, str(ROOT / "eval"))
 
 from run_eval import N_QUERIES, load_labels, load_queries, method_hybrid, score
 
-METHOD = "hybrid_rrf60"
+METHOD = "hybrid_rrf60_spell"
+BAR_METHODS = [METHOD, "hybrid_rrf60"]
 TOLERANCE = 0.005
 
 
 def main():
     runs = pd.read_csv(ROOT / "results/runs.csv")
-    best = runs[runs.method == METHOD].p10_strict.max()
+    best = runs[runs.method.isin(BAR_METHODS)].p10_strict.max()
     assert pd.notna(best), f"no logged {METHOD} run in runs.csv"
     floor = round(best - TOLERANCE, 4)
 
     queries = load_queries()
     labels = load_labels()
-    run = method_hybrid("rrf")
+    run = method_hybrid("rrf", spell=True)
     start = time.time()
     results = [(int(qid), text, run(int(qid), text), 0.0)
                for qid, text in zip(queries.query_id, queries["query"])]
@@ -47,7 +50,7 @@ def main():
     strict = per_query.p10_strict.mean()
 
     print(f"strict P@10 here: {strict:.4f}  "
-          f"(best logged {METHOD}: {best:.4f}, gate floor: {floor:.4f}, "
+          f"(best logged {'/'.join(BAR_METHODS)}: {best:.4f}, gate floor: {floor:.4f}, "
           f"{(time.time() - start) / 60:.1f} min)")
     if strict < floor:
         print("GATE FAILED: the serving method scores below the logged best.")

@@ -30,3 +30,10 @@ full_ft,2026-10-29,55b9c59,full_ft,0.1087,0.3542,0.611,"item 8: fine-tuned MiniL
 full_ft_hybrid,2026-10-29,55b9c59,full_ft_hybrid,0.2517,0.609,0.3469,"item 8: RRF k=60, bm25_rewrite top100 + full_ft top100"
 hybrid_rrf60_served,2026-10-30,8d422d2,hybrid_rrf60,0.3688,0.8062,0.1596,item 9: same method re-run against the serving alias (minilm index) after the swap; differs from hybrid_rrf60 only by equal-score tie order deep in the legs
 hybrid_rrf60_det,2026-10-30,428badb,hybrid_rrf60,0.3677,0.8065,0.16,"item 9: hybrid with deterministic tie-break (score then product id), the canonical serving ranking; replaces hybrid_rrf60_served as the test target"
+all480_plain,2026-10-31,4593ad4,hybrid_rrf60,0.3673,0.8048,0.1623,"typo experiment: per-word fuzzy fallback vs spell correction, keyword leg only; plain baseline on today's index"
+all480_spell,2026-10-31,4593ad4,hybrid_rrf60_spell,0.3671,0.8033,0.1635,"typo experiment: per-word fuzzy fallback vs spell correction, keyword leg only"
+all480_fuzzyword,2026-10-31,4593ad4,hybrid_rrf60_fuzzyword,0.3688,0.8046,0.1625,"typo experiment: per-word fuzzy fallback vs spell correction, keyword leg only"
+typo50_clean_plain,2026-10-31,4593ad4,hybrid_rrf60@typo50.original,0.272,0.776,0.174,"typo experiment: per-word fuzzy fallback vs spell correction, keyword leg only; the 50 queries without typos, for scale"
+typo50_plain,2026-10-31,4593ad4,hybrid_rrf60@typo50,0.198,0.568,0.344,"typo experiment: per-word fuzzy fallback vs spell correction, keyword leg only"
+typo50_spell,2026-10-31,4593ad4,hybrid_rrf60_spell@typo50,0.224,0.658,0.268,"typo experiment: per-word fuzzy fallback vs spell correction, keyword leg only"
+typo50_fuzzyword,2026-10-31,4593ad4,hybrid_rrf60_fuzzyword@typo50,0.25,0.652,0.274,"typo experiment: per-word fuzzy fallback vs spell correction, keyword leg only"

@@ -33,12 +33,18 @@ not a score). The strict ceiling, with labels as they are, is 0.5975.
 | Plain BM25 (the floor) | 0.3229 | 0.6892 | 0.2554 |
 | BM25 + class-boost rewriting (keyword baseline) | 0.3208 | 0.7140 | 0.2354 |
 | MiniLM vectors, HNSW | 0.3475 | 0.7758 | 0.1919 |
-| **Hybrid: RRF over both (deployed)** | **0.3688** | **0.8069** | **0.1598** |
+| Hybrid: RRF over both | 0.3688 | 0.8069 | 0.1598 |
+| **Hybrid + spell correction on the keyword leg (deployed)** | **0.3671** | **0.8033** | **0.1635** |
 | Best possible (label ceiling) | 0.5975 | 0.9858 | 0.0 |
 
 Winners were decided with a paired bootstrap over queries (10,000 resamples);
 a change only counts if its 95% interval excludes zero. Ties go to the simpler
 option.
+
+Spell correction ties plain hybrid on the 480 (they contain almost no typos)
+and is kept for typos: on 50 WANDS queries with one typo each it lifts strict
+P@10 from 0.198 to 0.224 (interval +0.008 to +0.048). Details in
+`docs/experiments.md`, "Typo handling".
 
 ## Six results worth reading
 
@@ -95,7 +101,7 @@ flowchart LR
     B[Browser demo page] --> A[FastAPI api.py]
     A --> R[(Redis cache)]
     A --> E[Elasticsearch\nproducts_live alias]
-    E --> BM[BM25 + class boosts\ntop 100]
+    E --> BM[BM25 + class boosts\n+ spell fix, top 100]
     E --> KNN[MiniLM kNN HNSW\ntop 100]
     BM --> F[RRF k=60]
     KNN --> F
@@ -150,7 +156,7 @@ PYTHONPATH=src .venv/bin/python src/rebuild_index.py --model minilm
 Open http://localhost:8000 and search. To re-measure any number:
 
 ```bash
-.venv/bin/python eval/run_eval.py --method hybrid_rrf60 --run-name my_check --no-log
+.venv/bin/python eval/run_eval.py --method hybrid_rrf60_spell --run-name my_check --no-log
 .venv/bin/python tests/test_api.py
 ```
 

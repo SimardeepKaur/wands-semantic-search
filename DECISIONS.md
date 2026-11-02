@@ -115,3 +115,9 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Rejected:** Free CPU Basic (no longer exists for new accounts: the Space was quota-paused at creation, restart returned 403, and HF staff confirmed on the forum that compute Spaces now need a paid plan). PRO at $9 per month (always on, no wake wait, but a recurring charge). Always-on paid hardware without sleep (about $21.60 per month at $0.03 per hour).
 - **Evidence:** With sleep on, billing runs only while the Space is awake, so $5 covers roughly 166 awake-hours. Measured cold start on wake: 211 s; warm public search 133 ms uncached, 0.5 ms cached (`hf_space` rows in `results/perf.csv`).
 - **Why (in my words):**
+
+### Typo handling
+- **Chosen:** Spell correction on the keyword leg of the hybrid: each query word the catalogue has never seen is replaced by Elasticsearch's term-suggester best guess (max 2 edits). Words the catalogue knows are never touched. The vector leg encodes the query as typed.
+- **Rejected:** Per-word fuzzy fallback (fuzziness AUTO on unseen words only): tied with spell on the typo set, slower, and more matches per query. Plain hybrid (no typo handling): reliably worse on typos. Fuzzy on every word (item 2, already rejected).
+- **Evidence:** Typo set of 50 WANDS queries with one typo each (`eval/typo50.csv`): strict P@10 plain 0.198, spell 0.224 (diff +0.026, 95% interval +0.008 to +0.048), fuzzy 0.250 (+0.052, +0.016 to +0.098), fuzzy vs spell a tie (-0.006 to +0.068). All 480: plain 0.3673, spell 0.3671 (interval -0.0010 to +0.0004). Extra time where it fires: spell +7.5 ms, fuzzy +11.3 ms (typo set). Runs `typo50_*` and `all480_*` in `results/runs.csv`; full write-up in `docs/experiments.md`, "Typo handling". Known gap: sound-alike typos ("sopha" becomes "sophia").
+- **Why (in my words):**

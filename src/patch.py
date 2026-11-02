@@ -11,6 +11,9 @@ How each patch works:
   Elasticsearch's term suggester over product_name, and the best suggestion replaces it.
 - Rewriting with class boosts: when a query word points at a product class (same 55% rule),
   the query gets a boost for products of that class. At most two classes per query.
+- Per-word fuzzy fallback: a query word the catalogue has never seen (the same trigger as
+  spell correction) is matched with fuzziness AUTO; every other word stays exact. A query
+  with no such word runs exactly the query it ran before.
 """
 import json
 import re
@@ -77,13 +80,18 @@ def build_resources(force=False):
     return out
 
 
+def unseen(res, w):
+    """True for a query word the catalogue has never seen. Words under 3 letters never count."""
+    if not isinstance(res["vocab"], set):
+        res["vocab"] = set(res["vocab"])
+    return w not in res["vocab"] and len(w) >= 3
+
+
 def correct(es, res, query_words):
     """Replace words the catalogue has never seen with the term suggester's best guess."""
-    vocab = res["vocab"] if isinstance(res["vocab"], set) else set(res["vocab"])
-    res["vocab"] = vocab
     out = []
     for w in query_words:
-        if w in vocab or len(w) < 3:
+        if not unseen(res, w):
             out.append(w)
             continue
         resp = es.search(index="products_live", size=0, suggest={
@@ -95,7 +103,7 @@ def correct(es, res, query_words):
 
 
 def bm25_patched(es, query, k=10, synonyms=True, spell=True, rewrite=True, resources=None,
-                 es_filter=None):
+                 es_filter=None, fuzzy_unseen=False):
     """Top k product dicts for a query, with the chosen patches applied.
 
     es_filter: optional Elasticsearch filter clause (scores unchanged), for
@@ -105,7 +113,16 @@ def bm25_patched(es, query, k=10, synonyms=True, spell=True, rewrite=True, resou
     qw = words(query)
     if spell:
         qw = correct(es, res, qw)
-    must = {"multi_match": {"query": " ".join(qw), "fields": FIELDS}}
+    fuzzy_words = [w for w in qw if unseen(res, w)] if fuzzy_unseen else []
+    if fuzzy_words:
+        exact = [w for w in qw if w not in fuzzy_words]
+        clauses = [{"multi_match": {"query": w, "fields": FIELDS, "fuzziness": "AUTO"}}
+                   for w in fuzzy_words]
+        if exact:
+            clauses.insert(0, {"multi_match": {"query": " ".join(exact), "fields": FIELDS}})
+        must = {"bool": {"should": clauses, "minimum_should_match": 1}}
+    else:
+        must = {"multi_match": {"query": " ".join(qw), "fields": FIELDS}}
     should = []
     if synonyms:
         expansion = " ".join(dict.fromkeys(

@@ -136,9 +136,12 @@ def method_vector(model_key, exact=False):
     return run
 
 
-def method_hybrid(kind, w=None, model_key="minilm"):
+def method_hybrid(kind, w=None, model_key="minilm", spell=False, fuzzy_unseen=False):
     """RRF (k=60) or weighted blend over the top 100 from the patched BM25
-    (class-boost rewrite, the item 4 winner) and the top 100 from a vector index."""
+    (class-boost rewrite, the item 4 winner) and the top 100 from a vector index.
+
+    spell / fuzzy_unseen change only the keyword leg; the vector leg always
+    encodes the query as typed."""
     from elasticsearch import Elasticsearch
     from sentence_transformers import SentenceTransformer
 
@@ -153,8 +156,8 @@ def method_hybrid(kind, w=None, model_key="minilm"):
     top = 100
 
     def run(_qid, text):
-        bm = bm25_patched(es, text, top, synonyms=False, spell=False, rewrite=True,
-                          resources=resources)
+        bm = bm25_patched(es, text, top, synonyms=False, spell=spell, rewrite=True,
+                          resources=resources, fuzzy_unseen=fuzzy_unseen)
         vec = model.encode(text, normalize_embeddings=True).tolist()
         vc = vector_knn(es, index, vec, k=top, num_candidates=200)
         if kind == "rrf":
@@ -190,6 +193,10 @@ def get_method(name, labels):
         return method_vector(name)
     if name == "hybrid_rrf60":
         return method_hybrid("rrf")
+    if name == "hybrid_rrf60_spell":
+        return method_hybrid("rrf", spell=True)
+    if name == "hybrid_rrf60_fuzzyword":
+        return method_hybrid("rrf", fuzzy_unseen=True)
     if name.startswith("blend_w"):
         return method_hybrid("blend", w=float(name.removeprefix("blend_w")))
     if name in ("lora_r4", "lora_r16", "full_ft"):
@@ -264,17 +271,30 @@ def main():
     parser.add_argument("--notes", default="")
     parser.add_argument("--limit", type=int, help="score only the first N queries (not logged as a full run)")
     parser.add_argument("--no-log", action="store_true", help="print scores, write nothing")
+    parser.add_argument("--queries", type=Path,
+                        help="another query set keyed by WANDS query_id, e.g. eval/typo50.csv")
+    parser.add_argument("--query-column", default="query",
+                        help="which column of --queries holds the text to search")
     args = parser.parse_args()
 
     queries = load_queries()
+    set_tag = None
+    if args.queries:
+        queries = pd.read_csv(args.queries)[["query_id", args.query_column]]
+        queries = queries.rename(columns={args.query_column: "query"})
+        set_tag = args.queries.stem + ("" if args.query_column == "query"
+                                       else f".{args.query_column}")
     if args.limit:
         queries = queries.head(args.limit)
-    full_set = args.limit is None
+    full_set = args.limit is None and set_tag is None
     labels = load_labels()
     ceil = ceilings(labels, queries.query_id)
 
     if not args.no_log:
-        if not full_set and "subset" not in args.run_name:
+        if set_tag and args.queries.stem not in args.run_name:
+            raise SystemExit(f"A run on {args.queries.name} must have "
+                             f"{args.queries.stem!r} in its name.")
+        if not set_tag and not full_set and "subset" not in args.run_name:
             raise SystemExit("A run on part of the queries must have 'subset' in its name.")
         dirty = git_dirty()
         if dirty:
@@ -307,7 +327,9 @@ def main():
         "run_name": args.run_name,
         "date": dt.date.today().isoformat(),
         "git_commit": git_commit(),
-        "method": args.method,
+        # Runs on another query set carry its tag, so the CI gate (which reads the
+        # best run of the exact serving method name) only ever sees 480-query runs.
+        "method": args.method + (f"@{set_tag}" if set_tag else ""),
         "p10_strict": round(strict, 4),
         "p10_lenient": round(lenient, 4),
         "unlabelled_share": round(unlab, 4),
