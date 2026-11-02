@@ -550,9 +550,15 @@ Time: not judged. The laptop was under heavy memory pressure (about 4 GB in the
 memory compressor), and per-query times were 0.6 to 1.7 s against 39 ms for the
 same typo50 spell run on 2026-10-31.
 
-**Verdict: frequency first does not ship.**
+**Verdict: frequency first does not ship. It corrects fewer 1-edit misspellings
+to the intended word, with no reliable P@10 change, and it is untested on 2-edit
+misspellings.**
 - Test 1 fails: on soundalike50 the interval (-0.042 to +0.004) is not above 0.
   The point estimate is negative.
+- What the set tested: 45 of the 50 are 1 edit. On those, 3 queries changed
+  (1 better, 2 worse, mean -0.016). The 5 with 2 or more edits all tie (no change).
+  So this is a result on 1-edit misspellings only; the 2-edit case ("sopha") was
+  not tested.
 - Test 2 (the typo50 guard) passes: interval -0.008 to +0.032 includes 0.
 - Test 3 was not run. It cannot change the verdict once test 1 fails, and it is
   an 8-minute run on a laptop already swapping.
@@ -561,7 +567,9 @@ same typo50 spell run on 2026-10-31.
   are 1 edit, so soundalike50 is a tie or worse) was right. On the words
   themselves frequency first is worse on both sets (4 and 6 fewer correct); the
   vector leg hides most of that in P@10.
-- "sopha" stays a known gap. Frequency first fixes it but breaks more real
-  misspellings than it fixes. A fix would need to weigh closeness and frequency
-  together (the 10-line version of option 1), which is a new experiment.
+- "sopha" stays a known gap. Frequency first fixes it, but on 1-edit
+  misspellings it recovers the intended word less often (28 vs 34, 37 vs 41).
+  Whether it helps on 2-edit misspellings needs a set that is mostly 2-edit.
+  Weighing closeness and frequency together (the 10-line version of option 1)
+  would be a new experiment.
 
