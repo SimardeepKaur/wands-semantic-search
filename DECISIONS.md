@@ -54,7 +54,7 @@ One entry per choice. Claude fills in "Chosen", "Rejected" and "Evidence" when w
 - **Chosen:** `all-MiniLM-L6-v2`. The stack originally fixed `all-mpnet-base-v2`; the measurement said otherwise and the user agreed to switch (2026-10-29). All later work (pooling, hybrid, LoRA, the service) uses MiniLM.
 - **Rejected:** `all-mpnet-base-v2` (bigger and slower, and it scored lower here). Calling an LLM to embed (cost and latency, not measured).
 - **Evidence:** `minilm_hnsw` beats `mpnet_hnsw` on strict P@10: 0.3475 vs 0.3315 (+0.0160, 95% interval 0.0035 to 0.0281, reliable). Also fewer unlabelled results (0.1919 vs 0.2115), 4x lower query latency, encoding included (16.4 vs 63.5 ms p50), 6x faster product encoding (7.7 vs 46.1 min), half the vector size (384 vs 768). Runs `mpnet_hnsw`, `mpnet_exact`, `minilm_hnsw`; `docs/experiments.md` item 5.
-- **Why (in my words):**
+- **Why (in my words):** minilm is slightly but reliably better (+0.016 strict, interval 0.0035 to 0.028), though part of the gap may be mpnet finding unlabelled products (0.21 vs 0.19). it's also faster per query on cpu, measured on the laptop: 16.4 vs 63.5 ms p50 and 152.5 vs 354.2 ms p99, encoding plus search. i'd switch to mpnet if it beats minilm beyond noise on a new eval set and we can afford ~47 ms more per query.
 
 ### Pooling (product vector from feature vectors)
 - **Chosen:** No feature pooling. The product vector is the whole-text MiniLM vector (name, class, category path, description encoded as one passage).
