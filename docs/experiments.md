@@ -463,10 +463,16 @@ Arms, inside the served hybrid (RRF k=60), keyword leg only:
 - spellfreq (`hybrid_rrf60_spellfreq`): the same code with `sort: "frequency"`.
 
 Sets:
-- soundalike50: sound-alike misspellings of WANDS query words. It must not be
-  built from "ph to f" or any other swap we already know, or the fix is graded
-  on its own rules. Source not fixed yet. Rejected on the first try (no eval
-  run): generating 2-edit misspellings with the same Soundex code. Soundex
+- soundalike50 (`eval/soundalike50.csv`, made by `eval/make_soundalike_set.py`,
+  seed 20261102): real human misspellings from the Birkbeck spelling error
+  corpus, one per query, picked at random. It must not be built from "ph to f"
+  or any other swap we already know, or the fix is graded on its own rules.
+  Birkbeck covers 348 of the 480 WANDS queries; Wikipedia's machine-readable
+  common misspellings list covers 54, so Birkbeck was used. Edit distance mix
+  of the 50: 1 edit 45, 2 edits 4, 3 or more 1. "sopha" is not in it ("sofa" is
+  not in the corpus). The name stays soundalike50; most entries are real
+  phonetic misspellings ("wite", "fraim", "hardwear"), not all. Rejected on the
+  first try (no eval run): generating 2-edit misspellings with the same Soundex code. Soundex
   ignores vowels, h, w and y and groups c g j k q s x z together, so almost any
   string passes ("sunflgojwer", "bflba", "deykh"). A tighter version with
   per-edit Soundex-group rules was still not what shoppers type ("frhamhe",
@@ -493,3 +499,8 @@ Claude's prediction:
   it is a little more likely than not (about 55%) that the interval sits fully
   below 0, which fails test 2 and stops the experiment.
 - all 480: a tie. Only 32 queries fire correction.
+
+Update after the set was built, before any run: 45 of the 50 are 1 edit away,
+the same shape as typo50, not the 2-edit case "sopha" needs. So I now expect
+soundalike50 to behave like typo50: spellfreq worse than spell or a tie, and
+test 1 fails. If it does, frequency-first does not ship even if typo50 passes.
