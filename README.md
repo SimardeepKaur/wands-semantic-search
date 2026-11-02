@@ -33,7 +33,7 @@ not a score). The strict ceiling, with labels as they are, is 0.5975.
 | Plain BM25 (the floor) | 0.3229 | 0.6892 | 0.2554 |
 | BM25 + class-boost rewriting (keyword baseline) | 0.3208 | 0.7140 | 0.2354 |
 | MiniLM vectors, HNSW | 0.3475 | 0.7758 | 0.1919 |
-| Hybrid: RRF over both | 0.3688 | 0.8069 | 0.1598 |
+| Hybrid: RRF over both | 0.3673 | 0.8048 | 0.1623 |
 | **Hybrid + spell correction on the keyword leg (deployed)** | **0.3671** | **0.8033** | **0.1635** |
 | Best possible (label ceiling) | 0.5975 | 0.9858 | 0.0 |
 
