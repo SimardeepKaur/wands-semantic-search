@@ -447,3 +447,49 @@ The laptop was under swap pressure, so treat these as rough.
   though not reliably. Gains were smaller than the typo cost, as Claude predicted:
   the typo costs 0.074 strict (0.272 to 0.198), spell recovers 0.026 of it.
 - Still unfixed, as stated before running: "sopha" (spell turns it into "sophia").
+
+## Spell correction: frequency-first suggestion vs closest-first (2026-11-02)
+
+### Written before any run
+
+The gap: spell correction turns "sopha" into "sophia". The term suggester sorts
+by closeness first, so "sophia" (1 edit) beats "sofa" (2 edits) even though
+"sofa" is in far more product names. The fix under test changes only that
+choice: the suggester's built-in `sort: "frequency"` (document frequency first,
+then closeness). Nothing else in the keyword or vector leg changes.
+
+Arms, inside the served hybrid (RRF k=60), keyword leg only:
+- spell (`hybrid_rrf60_spell`): what ships today, closest first.
+- spellfreq (`hybrid_rrf60_spellfreq`): the same code with `sort: "frequency"`.
+
+Sets:
+- soundalike50: sound-alike misspellings of WANDS query words. It must not be
+  built from "ph to f" or any other swap we already know, or the fix is graded
+  on its own rules. Source not fixed yet. Rejected on the first try (no eval
+  run): generating 2-edit misspellings with the same Soundex code. Soundex
+  ignores vowels, h, w and y and groups c g j k q s x z together, so almost any
+  string passes ("sunflgojwer", "bflba", "deykh"). A tighter version with
+  per-edit Soundex-group rules was still not what shoppers type ("frhamhe",
+  "whuteh") and was a rule list we chose.
+- typo50: the existing one-typo set (`eval/typo50.csv`), unchanged.
+- all 480.
+
+Pass rule (agreed 2026-11-02), all strict P@10, 95% paired bootstrap, spellfreq
+minus spell on the same set:
+1. soundalike50: interval above 0.
+2. typo50 must not get worse: interval includes 0 or sits above it. If it fails,
+   stop: nothing ships and this section says so.
+3. all 480: interval includes 0 or sits above it.
+Also reported, not part of the rule: the share of typo words corrected to the
+intended word on each set, and extra time per query where correction fires.
+
+Claude's prediction:
+- "sopha" becomes "sofa".
+- soundalike50: spellfreq beats spell, about +0.02 to +0.04 strict. It passes
+  test 1 if the set has enough 2-edit misspellings of common words.
+- typo50: spellfreq is worse, about -0.01 to -0.03 strict, with more queries
+  worse than better. Every typo50 word is 1 edit from the answer, and frequency
+  first will pick a more common word 2 edits away whenever one exists. I think
+  it is a little more likely than not (about 55%) that the interval sits fully
+  below 0, which fails test 2 and stops the experiment.
+- all 480: a tie. Only 32 queries fire correction.
